@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { ChevronRight, Dna } from 'lucide-react-native';
+import { ChevronRight, Dna, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../../theme';
 import { EmergencyModal } from '../../components/EmergencyModal';
@@ -80,12 +80,63 @@ const PROFILE_DATA = {
     { titulo: 'Envío Gratis Medicamentos', estado: 'Activo por 3 meses' },
     { titulo: 'Asesoramiento Nutricional Gratis', estado: 'Disponible' },
   ],
+
+  // Familia
+  familia: [
+    {
+      id: 1,
+      nombre: 'Rosa María Herrera',
+      relacion: 'Madre',
+      edad: 72,
+      ultimaCita: '2025-11-10',
+      especialista: 'Dra. Elena Romero - Geriatría',
+      enTratamiento: true,
+      tratamiento: 'Hipertensión y Diabetes Tipo II',
+      recetasActivas: ['Metformina 500mg', 'Enalapril 10mg'],
+    },
+    {
+      id: 2,
+      nombre: 'Carlos Herrera',
+      relacion: 'Hermano',
+      edad: 45,
+      ultimaCita: '2025-10-25',
+      especialista: 'Dr. Juan Mendez - Cardiología',
+      enTratamiento: false,
+      tratamiento: null,
+      recetasActivas: [],
+    },
+    {
+      id: 3,
+      nombre: 'Brigitte Chavez Herrera',
+      relacion: 'Hija',
+      edad: 22,
+      ultimaCita: '2025-11-15',
+      especialista: 'Dra. Patricia González - Medicina General',
+      enTratamiento: false,
+      tratamiento: null,
+      recetasActivas: [],
+    },
+    {
+      id: 4,
+      nombre: 'Miguel Herrera',
+      relacion: 'Padre',
+      edad: 75,
+      ultimaCita: '2025-09-20',
+      especialista: 'Dr. Ricardo Soto - Cardiología',
+      enTratamiento: true,
+      tratamiento: 'Fibrilación Auricular',
+      recetasActivas: ['Warfarina 5mg', 'Bisoprolol 5mg'],
+    },
+  ],
 };
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
+  const [familiaExpanded, setFamiliaExpanded] = useState(false);
+  const [selectedFamiliar, setSelectedFamiliar] = useState<any>(null);
+  const [familiarModalVisible, setFamiliarModalVisible] = useState(false);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -329,6 +380,73 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* MIRA A TU FAMILIA */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.familiaHeaderButton}
+            onPress={() => setFamiliaExpanded(!familiaExpanded)}
+            activeOpacity={0.75}
+          >
+            <View style={styles.familiaHeaderContent}>
+              <View style={styles.familiaHeaderLeft}>
+                <Text style={styles.familiaHeaderIcon}>👨‍👩‍👧‍👦</Text>
+                <View style={styles.familiaHeaderText}>
+                  <Text style={styles.familiaHeaderTitle}>Mira a tu Familia</Text>
+                  <Text style={styles.familiaHeaderSubtitle}>
+                    {PROFILE_DATA.familia.length} familiares disponibles
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight 
+                size={24}
+                color={RIMAC_COLORS.primary}
+                style={familiaExpanded ? { transform: [{ rotate: '90deg' }] } : {}}
+                strokeWidth={1.5}
+              />
+            </View>
+          </TouchableOpacity>
+
+          {familiaExpanded && (
+            <View style={styles.familiaListContainer}>
+              {PROFILE_DATA.familia.map((familiar, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.familiarCard}
+                  onPress={() => {
+                    setSelectedFamiliar(familiar);
+                    setFamiliarModalVisible(true);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.familiarLeft}>
+                    <View style={styles.familiarAvatar}>
+                      <Text style={styles.familiarAvatarLetter}>
+                        {familiar.nombre.charAt(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.familiarInfo}>
+                      <Text style={styles.familiarName}>{familiar.nombre}</Text>
+                      <Text style={styles.familiarRelation}>{familiar.relacion} • {familiar.edad} años</Text>
+                      <View style={styles.familiarStatus}>
+                        {familiar.enTratamiento && (
+                          <View style={styles.statusBadge}>
+                            <Text style={styles.statusBadgeText}>💊 En tratamiento</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                  <ChevronRight 
+                    size={20}
+                    color={RIMAC_COLORS.gray[400]}
+                    strokeWidth={1.5}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
         {/* BENEFICIOS - TARJETAS BLANCAS */}
         <View style={styles.section}>
           <Text style={styles.sectionTitleDark}>🎁 Beneficios Activos</Text>
@@ -398,6 +516,110 @@ export default function ProfileScreen() {
         userPhone={PROFILE_DATA.telefono}
         userAddress={PROFILE_DATA.ubicacion}
       />
+
+      {/* FAMILIAR DETAILS MODAL */}
+      <Modal
+        visible={familiarModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFamiliarModalVisible(false)}
+      >
+        <LinearGradient
+          colors={[RIMAC_COLORS.primary, RIMAC_COLORS.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modalGradient}
+        >
+          <ScrollView style={styles.modalContainer} showsVerticalScrollIndicator={false}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity 
+                onPress={() => setFamiliarModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color={RIMAC_COLORS.white} />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Información Familiar</Text>
+              <View style={{ width: 40 }} />
+            </View>
+
+            {selectedFamiliar && (
+              <View style={styles.modalContent}>
+                {/* Información Personal */}
+                <View style={styles.modalCard}>
+                  <View style={styles.modalCardHeader}>
+                    <Text style={styles.modalCardTitle}>👤 Información Personal</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Nombre</Text>
+                    <Text style={styles.infoValue}>{selectedFamiliar.nombre}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Relación</Text>
+                    <Text style={styles.infoValue}>{selectedFamiliar.relacion}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Edad</Text>
+                    <Text style={styles.infoValue}>{selectedFamiliar.edad} años</Text>
+                  </View>
+                </View>
+
+                {/* Última Cita */}
+                <View style={styles.modalCard}>
+                  <View style={styles.modalCardHeader}>
+                    <Text style={styles.modalCardTitle}>📅 Última Cita Médica</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Fecha</Text>
+                    <Text style={styles.infoValue}>
+                      {new Date(selectedFamiliar.ultimaCita).toLocaleDateString('es-PE')}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Especialista</Text>
+                    <Text style={styles.infoValue}>{selectedFamiliar.especialista}</Text>
+                  </View>
+                </View>
+
+                {/* Tratamiento Activo */}
+                {selectedFamiliar.enTratamiento && (
+                  <View style={styles.modalCard}>
+                    <View style={styles.modalCardHeader}>
+                      <Text style={styles.modalCardTitle}>💊 Tratamiento Activo</Text>
+                    </View>
+                    <View style={styles.treatmentBox}>
+                      <Text style={styles.treatmentText}>{selectedFamiliar.tratamiento}</Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Recetas Activas */}
+                {selectedFamiliar.recetasActivas.length > 0 && (
+                  <View style={styles.modalCard}>
+                    <View style={styles.modalCardHeader}>
+                      <Text style={styles.modalCardTitle}>💉 Recetas Activas</Text>
+                    </View>
+                    {selectedFamiliar.recetasActivas.map((receta, idx) => (
+                      <View key={idx} style={styles.recetaItem}>
+                        <Text style={styles.recetaIcon}>💊</Text>
+                        <Text style={styles.recetaText}>{receta}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {!selectedFamiliar.enTratamiento && selectedFamiliar.recetasActivas.length === 0 && (
+                  <View style={styles.modalCard}>
+                    <Text style={styles.noDataText}>✓ Sin tratamientos activos</Text>
+                  </View>
+                )}
+
+                <View style={{ height: SPACING['3xl'] }} />
+              </View>
+            )}
+          </ScrollView>
+        </LinearGradient>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -903,5 +1125,223 @@ const styles = StyleSheet.create({
     color: RIMAC_COLORS.gray[600],
     fontWeight: '400',
     lineHeight: 16,
+  },
+
+  /* FAMILIA SECTION */
+  familiaHeaderButton: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: RIMAC_COLORS.primary + '20',
+    overflow: 'hidden',
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  familiaHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+  },
+  familiaHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  },
+  familiaHeaderIcon: {
+    fontSize: 32,
+  },
+  familiaHeaderText: {
+    flex: 1,
+  },
+  familiaHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  familiaHeaderSubtitle: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '400',
+  },
+  familiaListContainer: {
+    marginTop: SPACING.lg,
+    gap: SPACING.md,
+  },
+  familiarCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  familiarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.lg,
+    flex: 1,
+  },
+  familiarAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: RIMAC_COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  familiarAvatarLetter: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: RIMAC_COLORS.white,
+  },
+  familiarInfo: {
+    flex: 1,
+  },
+  familiarName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  familiarRelation: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '500',
+    marginBottom: SPACING.xs,
+  },
+  familiarStatus: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  statusBadge: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+
+  /* MODAL */
+  modalGradient: {
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 50,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+  },
+  modalCloseButton: {
+    padding: SPACING.sm,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    flex: 1,
+    textAlign: 'center',
+  },
+  modalContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+  },
+  modalCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modalCardHeader: {
+    marginBottom: SPACING.lg,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: RIMAC_COLORS.gray[200],
+  },
+  modalCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: RIMAC_COLORS.gray[100],
+  },
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[600],
+    textTransform: 'uppercase',
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[900],
+  },
+  treatmentBox: {
+    backgroundColor: RIMAC_COLORS.gray[50],
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+  },
+  treatmentText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[900],
+    lineHeight: 20,
+  },
+  recetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: RIMAC_COLORS.gray[100],
+    gap: SPACING.md,
+  },
+  recetaIcon: {
+    fontSize: 18,
+  },
+  recetaText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[800],
+    flex: 1,
+  },
+  noDataText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#065F46',
+    textAlign: 'center',
+    paddingVertical: SPACING.lg,
   },
 });
