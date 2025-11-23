@@ -1,530 +1,384 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput } from 'react-native';
-import { Calendar, Clock, MapPin, User, Plus, X } from 'lucide-react-native';
-import { apiService } from '../services/api';
-import { USUARIO_ACTUAL } from '../config/usuario';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../theme';
+import { ChevronLeft, Plus, MapPin, Clock, User } from 'lucide-react-native';
+
+const CITAS_DATA = [
+  {
+    id: 1,
+    estado: 'confirmada',
+    especialista: 'Dr. Rafael Montoya',
+    especialidad: 'Cardiología',
+    fecha: '28 de noviembre 2024',
+    hora: '14:30',
+    clinica: 'Clínica Privada RIMAC',
+    ubicacion: 'Av. Paseo de la República 3505, Lima',
+  },
+  {
+    id: 2,
+    estado: 'pendiente',
+    especialista: 'Dra. María González',
+    especialidad: 'Medicina General',
+    fecha: '5 de diciembre 2024',
+    hora: '10:00',
+    clinica: 'Centro Médico RIMAC',
+    ubicacion: 'Calle Principal 1234, Lima',
+  },
+  {
+    id: 3,
+    estado: 'historial',
+    especialista: 'Dr. Carlos Pérez',
+    especialidad: 'Dermatología',
+    fecha: '15 de octubre 2024',
+    hora: '16:00',
+    clinica: 'Policlínico RIMAC',
+    ubicacion: 'Av. Javier Prado 789, Lima',
+  },
+];
 
 export default function CitasScreen() {
-  const [citas, setCitas] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [selectedCita, setSelectedCita] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [nuevaCita, setNuevaCita] = useState({
-    tipo: 'consulta',
-    especialidad: '',
-    fecha: '',
-    hora: '',
-    modalidad: 'presencial',
-  });
 
-  useEffect(() => {
-    cargarCitas();
+  const getStatusColor = useCallback((estado: string) => {
+    switch (estado) {
+      case 'confirmada':
+        return '#10B981';
+      case 'pendiente':
+        return '#F59E0B';
+      case 'historial':
+        return '#6B7280';
+      default:
+        return RIMAC_COLORS.gray[500];
+    }
   }, []);
 
-  const cargarCitas = async () => {
-    try {
-      const data = await apiService.obtenerCitas(USUARIO_ACTUAL) as any;
-      setCitas(data.citas || []);
-    } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar las citas');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const agendarCita = async () => {
-    if (!nuevaCita.especialidad || !nuevaCita.fecha || !nuevaCita.hora) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
-      return;
-    }
-
-    try {
-      await apiService.crearCita(USUARIO_ACTUAL, nuevaCita);
-      Alert.alert('Éxito', 'Cita agendada correctamente');
-      setModalVisible(false);
-      setNuevaCita({
-        tipo: 'consulta',
-        especialidad: '',
-        fecha: '',
-        hora: '',
-        modalidad: 'presencial',
-      });
-      cargarCitas();
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo agendar la cita');
-    }
-  };
-
-  const citasProgramadas = citas.filter(c => c.estado === 'programada');
-  const citasPasadas = citas.filter(c => c.estado === 'completada' || new Date(`${c.fecha}T${c.hora}`) < new Date());
-
-  const getEstadoColor = (estado: string) => {
+  const getStatusLabel = useCallback((estado: string) => {
     switch (estado) {
-      case 'programada': return '#0066cc';
-      case 'completada': return '#4caf50';
-      case 'cancelada': return '#ff4444';
-      default: return '#666';
+      case 'confirmada':
+        return 'Confirmada';
+      case 'pendiente':
+        return 'Pendiente';
+      case 'historial':
+        return 'Historial';
+      default:
+        return estado;
     }
-  };
-
-  const renderCita = (cita: any) => (
-    <View key={cita.id} style={styles.citaCard}>
-      <View style={styles.citaHeader}>
-        <View style={[styles.estadoBadge, { backgroundColor: `${getEstadoColor(cita.estado)}20` }]}>
-          <Text style={[styles.estadoText, { color: getEstadoColor(cita.estado) }]}>
-            {cita.estado.toUpperCase()}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.citaInfo}>
-        <View style={styles.citaRow}>
-          <Calendar size={18} color="#666" />
-          <Text style={styles.citaText}>
-            {new Date(cita.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </Text>
-        </View>
-
-        <View style={styles.citaRow}>
-          <Clock size={18} color="#666" />
-          <Text style={styles.citaText}>{cita.hora}</Text>
-        </View>
-
-        <View style={styles.citaRow}>
-          <User size={18} color="#666" />
-          <Text style={styles.citaText}>{cita.medico}</Text>
-        </View>
-
-        <View style={styles.citaRow}>
-          <Text style={styles.citaLabel}>Especialidad:</Text>
-          <Text style={styles.citaText}>{cita.especialidad}</Text>
-        </View>
-
-        <View style={styles.citaRow}>
-          <Text style={styles.citaLabel}>Modalidad:</Text>
-          <Text style={styles.citaText}>{cita.modalidad}</Text>
-        </View>
-
-        {cita.ubicacion && (
-          <View style={styles.citaRow}>
-            <MapPin size={18} color="#666" />
-            <Text style={styles.citaText}>{cita.ubicacion}</Text>
-          </View>
-        )}
-
-        {cita.link && (
-          <TouchableOpacity style={styles.linkButton}>
-            <Text style={styles.linkText}>🔗 Unirse a videollamada</Text>
-          </TouchableOpacity>
-        )}
-
-        {cita.diagnostico && (
-          <View style={styles.diagnosticoBox}>
-            <Text style={styles.diagnosticoTitle}>Diagnóstico:</Text>
-            <Text style={styles.diagnosticoText}>{cita.diagnostico}</Text>
-          </View>
-        )}
-
-        {cita.recomendaciones && cita.recomendaciones.length > 0 && (
-          <View style={styles.recomendacionesBox}>
-            <Text style={styles.recomendacionesTitle}>Recomendaciones:</Text>
-            {cita.recomendaciones.map((rec: string, index: number) => (
-              <Text key={index} style={styles.recomendacionText}>• {rec}</Text>
-            ))}
-          </View>
-        )}
-      </View>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0066cc" />
-        <Text style={styles.loadingText}>Cargando citas...</Text>
-      </View>
-    );
-  }
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[RIMAC_COLORS.primary, RIMAC_COLORS.primaryDark]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      {/* HEADER */}
       <View style={styles.header}>
-        <Calendar size={32} color="#fff" />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ChevronLeft size={24} color={RIMAC_COLORS.white} />
+        </TouchableOpacity>
         <Text style={styles.title}>Mis Citas</Text>
-        <Text style={styles.subtitle}>
-          {citasProgramadas.length} programada{citasProgramadas.length !== 1 ? 's' : ''}
-        </Text>
+        <TouchableOpacity style={styles.addButton} onPress={() => alert('Agendar nueva cita')}>
+          <Plus size={24} color={RIMAC_COLORS.white} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {citasProgramadas.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Próximas Citas</Text>
-            {citasProgramadas.map(renderCita)}
-          </View>
-        )}
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* PRÓXIMAS CITAS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📅 Próximas Citas</Text>
+          {CITAS_DATA.filter(c => c.estado === 'confirmada' || c.estado === 'pendiente').map((cita) => (
+            <TouchableOpacity
+              key={cita.id}
+              style={styles.citaCard}
+              onPress={() => {
+                setSelectedCita(cita);
+                setModalVisible(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <View style={styles.citaLeft}>
+                <View style={[styles.citaStatusBadge, { backgroundColor: getStatusColor(cita.estado) }]}>
+                  <Text style={styles.citaStatusText}>{getStatusLabel(cita.estado)}</Text>
+                </View>
+                <Text style={styles.citaDoctor}>{cita.especialista}</Text>
+                <Text style={styles.citaSpecialty}>{cita.especialidad}</Text>
+                <Text style={styles.citaDate}>{cita.fecha}</Text>
+              </View>
+              <View style={styles.citaRight}>
+                <Text style={styles.citaTime}>🕐 {cita.hora}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        {citasPasadas.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Historial</Text>
-            {citasPasadas.map(renderCita)}
-          </View>
-        )}
+        {/* HISTORIAL DE CITAS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📋 Historial</Text>
+          {CITAS_DATA.filter(c => c.estado === 'historial').map((cita) => (
+            <TouchableOpacity
+              key={cita.id}
+              style={styles.citaCardHistory}
+              onPress={() => {
+                setSelectedCita(cita);
+                setModalVisible(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <View>
+                <Text style={styles.citaDoctor}>{cita.especialista}</Text>
+                <Text style={styles.citaSpecialty}>{cita.especialidad}</Text>
+                <Text style={styles.citaDate}>{cita.fecha}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        {citas.length === 0 && (
-          <View style={styles.emptyState}>
-            <Calendar size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No tienes citas programadas</Text>
-            <Text style={styles.emptySubtext}>Agenda una nueva cita para comenzar</Text>
-          </View>
-        )}
+        <View style={{ height: SPACING['4xl'] }} />
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      >
-        <Plus size={24} color="#fff" />
-      </TouchableOpacity>
-
+      {/* MODAL DE DETALLES */}
       <Modal
         visible={modalVisible}
+        transparent
         animationType="slide"
-        transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <LinearGradient
+          colors={[RIMAC_COLORS.primary, RIMAC_COLORS.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modalGradient}
+        >
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Agendar Nueva Cita</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
+              <ChevronLeft size={24} color={RIMAC_COLORS.white} />
+            </TouchableOpacity>
 
-            <ScrollView style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Tipo de Cita</Text>
-              <View style={styles.radioGroup}>
-                <TouchableOpacity
-                  style={[styles.radioOption, nuevaCita.tipo === 'consulta' && styles.radioOptionSelected]}
-                  onPress={() => setNuevaCita({ ...nuevaCita, tipo: 'consulta' })}
-                >
-                  <Text style={[styles.radioText, nuevaCita.tipo === 'consulta' && styles.radioTextSelected]}>
-                    Consulta
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.radioOption, nuevaCita.tipo === 'telemedicina' && styles.radioOptionSelected]}
-                  onPress={() => setNuevaCita({ ...nuevaCita, tipo: 'telemedicina', modalidad: 'virtual' })}
-                >
-                  <Text style={[styles.radioText, nuevaCita.tipo === 'telemedicina' && styles.radioTextSelected]}>
-                    Telemedicina
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.radioOption, nuevaCita.tipo === 'chequeo' && styles.radioOptionSelected]}
-                  onPress={() => setNuevaCita({ ...nuevaCita, tipo: 'chequeo' })}
-                >
-                  <Text style={[styles.radioText, nuevaCita.tipo === 'chequeo' && styles.radioTextSelected]}>
-                    Chequeo
-                  </Text>
-                </TouchableOpacity>
+            {selectedCita && (
+              <View style={styles.detailsContainer}>
+                <Text style={styles.detailsTitle}>Detalles de la Cita</Text>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailLabel}>👨‍⚕️ Especialista</Text>
+                  <Text style={styles.detailValue}>{selectedCita.especialista}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailLabel}>🏥 Especialidad</Text>
+                  <Text style={styles.detailValue}>{selectedCita.especialidad}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailLabel}>🏢 Clínica</Text>
+                  <Text style={styles.detailValue}>{selectedCita.clinica}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailLabel}>📍 Ubicación</Text>
+                  <Text style={styles.detailValue}>{selectedCita.ubicacion}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailLabel}>📅 Fecha</Text>
+                  <Text style={styles.detailValue}>{selectedCita.fecha}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailLabel}>🕐 Hora</Text>
+                  <Text style={styles.detailValue}>{selectedCita.hora}</Text>
+                </View>
+
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity style={styles.btnPrimary} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.btnText}>Cerrar</Text>
+                  </TouchableOpacity>
+                  {selectedCita.estado === 'confirmada' && (
+                    <TouchableOpacity style={styles.btnSecondary} onPress={() => alert('Cita cancelada')}>
+                      <Text style={styles.btnTextSecondary}>Cancelar</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-
-              <Text style={styles.inputLabel}>Especialidad</Text>
-              <TextInput
-                style={styles.input}
-                value={nuevaCita.especialidad}
-                onChangeText={(text) => setNuevaCita({ ...nuevaCita, especialidad: text })}
-                placeholder="Ej: Cardiología, Medicina General"
-              />
-
-              <Text style={styles.inputLabel}>Fecha</Text>
-              <TextInput
-                style={styles.input}
-                value={nuevaCita.fecha}
-                onChangeText={(text) => setNuevaCita({ ...nuevaCita, fecha: text })}
-                placeholder="YYYY-MM-DD (Ej: 2024-04-15)"
-              />
-
-              <Text style={styles.inputLabel}>Hora</Text>
-              <TextInput
-                style={styles.input}
-                value={nuevaCita.hora}
-                onChangeText={(text) => setNuevaCita({ ...nuevaCita, hora: text })}
-                placeholder="HH:MM (Ej: 10:00)"
-              />
-
-              <Text style={styles.inputLabel}>Modalidad</Text>
-              <View style={styles.radioGroup}>
-                <TouchableOpacity
-                  style={[styles.radioOption, nuevaCita.modalidad === 'presencial' && styles.radioOptionSelected]}
-                  onPress={() => setNuevaCita({ ...nuevaCita, modalidad: 'presencial' })}
-                >
-                  <Text style={[styles.radioText, nuevaCita.modalidad === 'presencial' && styles.radioTextSelected]}>
-                    Presencial
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.radioOption, nuevaCita.modalidad === 'virtual' && styles.radioOptionSelected]}
-                  onPress={() => setNuevaCita({ ...nuevaCita, modalidad: 'virtual' })}
-                >
-                  <Text style={[styles.radioText, nuevaCita.modalidad === 'virtual' && styles.radioTextSelected]}>
-                    Virtual
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.agendarButton} onPress={agendarCita}>
-                <Text style={styles.agendarButtonText}>Agendar Cita</Text>
-              </TouchableOpacity>
-            </ScrollView>
+            )}
           </View>
-        </View>
+        </LinearGradient>
       </Modal>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#0066cc',
-    padding: 30,
-    paddingTop: 60,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#e0e0e0',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
-  },
-  citaCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  citaHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 12,
-  },
-  estadoBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  estadoText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  citaInfo: {
-    gap: 8,
-  },
-  citaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  citaLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginRight: 8,
-  },
-  citaText: {
-    fontSize: 14,
-    color: '#333',
-    flex: 1,
-  },
-  linkButton: {
-    backgroundColor: '#e3f2fd',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#0066cc',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  diagnosticoBox: {
-    backgroundColor: '#f5f5f5',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  diagnosticoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  diagnosticoText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  recomendacionesBox: {
-    backgroundColor: '#e8f5e9',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  recomendacionesTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  recomendacionText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#0066cc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
-  },
-  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: 50,
+    paddingBottom: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
-  modalTitle: {
+  backButton: {
+    padding: SPACING.sm,
+  },
+  title: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-  },
-  modalBody: {
-    padding: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 8,
-  },
-  radioOption: {
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    alignItems: 'center',
-  },
-  radioOptionSelected: {
-    borderColor: '#0066cc',
-    backgroundColor: '#e3f2fd',
-  },
-  radioText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  radioTextSelected: {
-    color: '#0066cc',
-    fontWeight: '600',
-  },
-  agendarButton: {
-    backgroundColor: '#0066cc',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  agendarButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
     textAlign: 'center',
   },
+  addButton: {
+    padding: SPACING.sm,
+  },
+  container: {
+    flex: 1,
+  },
+  section: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.lg,
+  },
+  citaCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  citaCardHistory: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  citaLeft: {
+    flex: 1,
+  },
+  citaRight: {
+    alignItems: 'flex-end',
+  },
+  citaStatusBadge: {
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    marginBottom: SPACING.sm,
+    alignSelf: 'flex-start',
+  },
+  citaStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+  },
+  citaDoctor: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.xs,
+  },
+  citaSpecialty: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+    marginBottom: SPACING.xs,
+  },
+  citaDate: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '500',
+  },
+  citaTime: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: RIMAC_COLORS.white,
+  },
+  modalGradient: {
+    flex: 1,
+  },
+  modalContent: {
+    flex: 1,
+    paddingTop: 50,
+    paddingHorizontal: SPACING.lg,
+  },
+  closeButton: {
+    alignSelf: 'flex-start',
+    marginBottom: SPACING.lg,
+  },
+  detailsContainer: {
+    flex: 1,
+  },
+  detailsTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.xl,
+  },
+  detailCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[600],
+    marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[900],
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    marginTop: SPACING.xl,
+  },
+  btnPrimary: {
+    flex: 1,
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+  },
+  btnSecondary: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: RIMAC_COLORS.white,
+  },
+  btnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+  },
+  btnTextSecondary: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+  },
 });
-

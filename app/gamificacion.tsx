@@ -1,251 +1,227 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { Trophy, Award, Target, TrendingUp, Star } from 'lucide-react-native';
-import { apiService } from '../services/api';
-import { USUARIO_ACTUAL } from '../config/usuario';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../theme';
+import { ChevronLeft, Star, Zap, Trophy } from 'lucide-react-native';
+
+const LOGROS_DATA = [
+  {
+    id: 1,
+    titulo: '¡Bienvenida!',
+    descripcion: 'Completa tu primer triaje de síntomas',
+    icono: '🎯',
+    obtenido: true,
+    fecha: '15 Oct 2024',
+    puntos: 50,
+  },
+  {
+    id: 2,
+    titulo: 'Asidua',
+    descripcion: 'Completa 5 citas en el año',
+    icono: '📅',
+    obtenido: true,
+    fecha: '2 Nov 2024',
+    puntos: 100,
+    progreso: 5,
+    meta: 5,
+  },
+  {
+    id: 3,
+    titulo: 'Médica Responsable',
+    descripcion: 'Toma todos tus medicamentos a tiempo (7 días)',
+    icono: '💊',
+    obtenido: true,
+    fecha: '10 Nov 2024',
+    puntos: 75,
+    progreso: 7,
+    meta: 7,
+  },
+  {
+    id: 4,
+    titulo: 'Experta en Salud',
+    descripcion: 'Completa 10 consultas de IA',
+    icono: '🧠',
+    obtenido: false,
+    puntos: 150,
+    progreso: 7,
+    meta: 10,
+  },
+  {
+    id: 5,
+    titulo: 'Comprometida',
+    descripcion: 'Mantén 30 días sin faltar a citas',
+    icono: '⭐',
+    obtenido: false,
+    puntos: 200,
+    progreso: 15,
+    meta: 30,
+  },
+  {
+    id: 6,
+    titulo: 'Campeona de Bienestar',
+    descripcion: 'Alcanza índice de bienestar de 90+',
+    icono: '🏆',
+    obtenido: false,
+    puntos: 250,
+    progreso: 85,
+    meta: 90,
+  },
+];
 
 export default function GamificacionScreen() {
-  const [gamificacion, setGamificacion] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  useEffect(() => {
-    cargarGamificacion();
-  }, []);
-
-  const cargarGamificacion = async () => {
-    try {
-      const data = await apiService.obtenerGamificacion(USUARIO_ACTUAL);
-      setGamificacion(data);
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo cargar la información de gamificación');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getNivelNombre = (nivel: number) => {
-    if (nivel <= 1) return 'Principiante';
-    if (nivel <= 3) return 'Aprendiz';
-    if (nivel <= 5) return 'Experto';
-    if (nivel <= 7) return 'Maestro';
-    return 'Leyenda';
-  };
-
-  const getNivelColor = (nivel: number) => {
-    if (nivel <= 1) return '#999';
-    if (nivel <= 3) return '#4caf50';
-    if (nivel <= 5) return '#0066cc';
-    if (nivel <= 7) return '#9c27b0';
-    return '#ff9800';
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0066cc" />
-        <Text style={styles.loadingText}>Cargando...</Text>
-      </View>
-    );
-  }
-
-  if (!gamificacion) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>No se pudo cargar la información</Text>
-      </View>
-    );
-  }
-
-  const nivel = gamificacion.nivel || 1;
-  const puntosParaSiguienteNivel = nivel * 100;
-  const progresoNivel = (gamificacion.puntos / puntosParaSiguienteNivel) * 100;
+  const totalPuntosObtenidos = LOGROS_DATA.filter(l => l.obtenido).reduce((sum, l) => sum + l.puntos, 0);
+  const logrosObtenidos = LOGROS_DATA.filter(l => l.obtenido).length;
 
   return (
-    <ScrollView style={styles.container}>
+    <LinearGradient
+      colors={[RIMAC_COLORS.primary, RIMAC_COLORS.primaryDark]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      {/* HEADER */}
       <View style={styles.header}>
-        <Trophy size={32} color="#fff" />
-        <Text style={styles.title}>Gamificación</Text>
-        <Text style={styles.subtitle}>Tu progreso y logros</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ChevronLeft size={24} color={RIMAC_COLORS.white} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Mis Logros</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.section}>
-        <View style={styles.nivelCard}>
-          <View style={[styles.nivelBadge, { backgroundColor: `${getNivelColor(nivel)}20` }]}>
-            <Text style={[styles.nivelNumero, { color: getNivelColor(nivel) }]}>
-              Nivel {nivel}
-            </Text>
-          </View>
-          <Text style={styles.nivelNombre}>{getNivelNombre(nivel)}</Text>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.min(progresoNivel, 100)}%`, backgroundColor: getNivelColor(nivel) },
-              ]}
-            />
-          </View>
-          <Text style={styles.progressText}>
-            {gamificacion.puntos} / {puntosParaSiguienteNivel} puntos para el siguiente nivel
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Estadísticas</Text>
-        
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* ESTADÍSTICAS GENERALES */}
         <View style={styles.statsGrid}>
+          {/* Logros Obtenidos */}
           <View style={styles.statCard}>
-            <TrendingUp size={32} color="#0066cc" />
-            <Text style={styles.statValue}>{gamificacion.rachaActual}</Text>
-            <Text style={styles.statLabel}>Racha Actual</Text>
+            <Trophy size={28} color={RIMAC_COLORS.primary} />
+            <Text style={styles.statValue}>{logrosObtenidos}</Text>
+            <Text style={styles.statLabel}>Logros</Text>
           </View>
 
+          {/* Puntos Totales */}
           <View style={styles.statCard}>
-            <Target size={32} color="#4caf50" />
-            <Text style={styles.statValue}>{gamificacion.rachaMaxima}</Text>
-            <Text style={styles.statLabel}>Racha Máxima</Text>
+            <Zap size={28} color={RIMAC_COLORS.primary} />
+            <Text style={styles.statValue}>{totalPuntosObtenidos}</Text>
+            <Text style={styles.statLabel}>Puntos</Text>
           </View>
 
+          {/* Nivel */}
           <View style={styles.statCard}>
-            <Star size={32} color="#ff9800" />
-            <Text style={styles.statValue}>{gamificacion.puntos}</Text>
-            <Text style={styles.statLabel}>Puntos Totales</Text>
+            <Star size={28} color={RIMAC_COLORS.primary} />
+            <Text style={styles.statValue}>Oro</Text>
+            <Text style={styles.statLabel}>Nivel</Text>
           </View>
         </View>
-      </View>
 
-      {gamificacion.medallas && gamificacion.medallas.length > 0 && (
+        {/* LOGROS OBTENIDOS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Medallas Obtenidas</Text>
-          
-          <View style={styles.medallasContainer}>
-            {gamificacion.medallas.map((medalla: string, index: number) => (
-              <View key={index} style={styles.medallaCard}>
-                <Award size={40} color="#ff9800" />
-                <Text style={styles.medallaText}>{medalla}</Text>
+          <Text style={styles.sectionTitle}>✅ Logros Obtenidos</Text>
+          {LOGROS_DATA.filter(l => l.obtenido).map((logro) => (
+            <View key={logro.id} style={styles.logroCard}>
+              <View style={styles.logroLeft}>
+                <Text style={styles.logroIcon}>{logro.icono}</Text>
+                <View style={styles.logroInfo}>
+                  <Text style={styles.logroTitulo}>{logro.titulo}</Text>
+                  <Text style={styles.logroDescripcion}>{logro.descripcion}</Text>
+                  <Text style={styles.logroFecha}>📅 {logro.fecha}</Text>
+                </View>
               </View>
-            ))}
-          </View>
+              <View style={styles.logroPuntos}>
+                <Text style={styles.puntosBadge}>+{logro.puntos}</Text>
+              </View>
+            </View>
+          ))}
         </View>
-      )}
 
-      {(!gamificacion.medallas || gamificacion.medallas.length === 0) && (
+        {/* PRÓXIMOS LOGROS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Medallas</Text>
-          <View style={styles.emptyMedallas}>
-            <Award size={48} color="#ccc" />
-            <Text style={styles.emptyText}>Aún no has obtenido medallas</Text>
-            <Text style={styles.emptySubtext}>
-              Mantén tu racha de adherencia para ganar medallas
+          <Text style={styles.sectionTitle}>🎯 En Progreso</Text>
+          {LOGROS_DATA.filter(l => !l.obtenido).map((logro) => (
+            <View key={logro.id} style={styles.proximoLogroCard}>
+              <View style={styles.logroLeft}>
+                <Text style={styles.logroIcon}>{logro.icono}</Text>
+                <View style={styles.logroInfo}>
+                  <Text style={styles.logroTitulo}>{logro.titulo}</Text>
+                  <Text style={styles.logroDescripcion}>{logro.descripcion}</Text>
+                  
+                  {/* Progress Bar */}
+                  <View style={styles.progressContainer}>
+                    <View
+                      style={[
+                        styles.progressBar,
+                        { width: `${(logro.progreso / logro.meta) * 100}%` }
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>
+                    {logro.progreso} / {logro.meta}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.logroPuntos}>
+                <Text style={styles.puntosFuturos}>+{logro.puntos}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* INFO ADICIONAL */}
+        <View style={styles.section}>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>💡 Sobre los Logros</Text>
+            <Text style={styles.infoText}>
+              Desbloquea logros completando acciones de salud.{'\n'}
+              Cada logro te otorga puntos que puedes canjear por beneficios y descuentos.
             </Text>
           </View>
         </View>
-      )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Consejos</Text>
-        <View style={styles.consejosCard}>
-          <Text style={styles.consejoText}>
-            💡 Mantén tu racha tomando tus medicamentos a tiempo
-          </Text>
-          <Text style={styles.consejoText}>
-            🎯 Cada día de adherencia te da 10 puntos
-          </Text>
-          <Text style={styles.consejoText}>
-            🏆 Alcanza 7 días consecutivos para obtener "Semana Perfecta"
-          </Text>
-          <Text style={styles.consejoText}>
-            ⭐ Alcanza 30 días consecutivos para obtener "Mes Perfecto"
-          </Text>
-        </View>
-      </View>
-    </ScrollView>
+        <View style={{ height: SPACING['4xl'] }} />
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#0066cc',
-    padding: 30,
-    paddingTop: 60,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: 50,
+    paddingBottom: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  backButton: {
+    padding: SPACING.sm,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#e0e0e0',
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
-  },
-  nivelCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  nivelBadge: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  nivelNumero: {
-    fontSize: 24,
     fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    flex: 1,
+    textAlign: 'center',
   },
-  nivelNombre: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 16,
-  },
-  progressBar: {
-    width: '100%',
-    height: 12,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#666',
+  container: {
+    flex: 1,
   },
   statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    gap: SPACING.lg,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -254,87 +230,132 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   statValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#333',
-    marginTop: 8,
-    marginBottom: 4,
+    fontSize: 20,
+    fontWeight: '800',
+    color: RIMAC_COLORS.primary,
+    marginVertical: SPACING.sm,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    fontSize: 11,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
-  medallasContainer: {
-    gap: 12,
+  section: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
   },
-  medallaCard: {
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.lg,
+  },
+  logroCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    gap: 16,
   },
-  medallaText: {
-    fontSize: 16,
-    color: '#333',
+  proximoLogroCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  logroLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    alignItems: 'flex-start',
+  },
+  logroIcon: {
+    fontSize: 32,
+  },
+  logroInfo: {
     flex: 1,
   },
-  emptyMedallas: {
-    alignItems: 'center',
-    padding: 40,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  logroTitulo: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
   },
-  emptyText: {
-    fontSize: 16,
+  logroDescripcion: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '500',
+    marginBottom: SPACING.sm,
+  },
+  logroFecha: {
+    fontSize: 11,
+    color: RIMAC_COLORS.gray[500],
+    fontWeight: '500',
+  },
+  progressContainer: {
+    height: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 3,
+    marginBottom: SPACING.xs,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-    marginBottom: 8,
   },
-  emptySubtext: {
+  logroPuntos: {
+    alignItems: 'center',
+  },
+  puntosBadge: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#10B981',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  puntosFuturos: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  infoCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  infoTitle: {
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.md,
   },
-  consejosCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  consejoText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+  infoText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
     lineHeight: 20,
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#ff4444',
-    textAlign: 'center',
-  },
 });
-
