@@ -6,9 +6,9 @@
 export const treatmentsContext = `
 # RIMAC Medication & Treatment Management
 
-## Medication Adherence
+## Medication Adherence (Adherencia a Medicamentos)
 
-### What Is Adherence?
+### What Is Adherence? / ¿Qué es la adherencia?
 Taking medications exactly as prescribed by your healthcare provider - right dose, right time, right duration.
 
 ### Why It Matters

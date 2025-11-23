@@ -88,7 +88,7 @@ Our intelligent triage system evaluates your symptoms to determine the urgency l
 - Chills
 - Night sweats
 
-## Telemedicine Service
+## Telemedicine Service (Telemedicina)
 
 ### How It Works
 1. Request virtual consultation through the app

@@ -4,9 +4,9 @@
  */
 
 export const emergencyContext = `
-# RIMAC Emergency Services
+# RIMAC Emergency Services (Servicios de Emergencia)
 
-## When to Call Emergency Services
+## When to Call Emergency Services / Cuándo llamar a emergencia
 
 ### Life-Threatening Emergencies (Call 911 or RIMAC Emergency: 24/7)
 
