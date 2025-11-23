@@ -141,7 +141,7 @@ A comprehensive health score (0-100) that combines multiple factors to assess yo
 - Difficulty concentrating
 - Changes in appetite
 - Fatigue
-- Anxiety or worry
+- Anxiety
 
 ### Stress Reduction Techniques
 - **Mindfulness Meditation:** 10-20 minutes daily

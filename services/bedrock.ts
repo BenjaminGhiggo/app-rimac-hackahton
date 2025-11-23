@@ -12,10 +12,17 @@ import {
   contextMetadata,
 } from '../contexts';
 
+export interface BedrockContextMetadata {
+  name?: string;
+  description?: string;
+  version?: string;
+  lastUpdated?: string;
+}
+
 export interface BedrockContext {
   type: 'insurance' | 'medical' | 'wellness' | 'treatments' | 'emergency';
   content: string;
-  metadata?: Record<string, any>;
+  metadata?: BedrockContextMetadata;
 }
 
 class BedrockService {
@@ -134,6 +141,7 @@ class BedrockService {
    */
   clearContexts(): void {
     this.contexts.clear();
+    this.initialized = false;
   }
 }
 

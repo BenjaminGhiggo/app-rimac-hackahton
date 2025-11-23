@@ -73,7 +73,7 @@ export const emergencyContext = `
 5. **Follow-up Care:** Coordination of post-emergency treatment
 
 ### Emergency Hotline
-- **Number:** [To be provided by RIMAC]
+- **Number:** [PLACEHOLDER - Replace with actual RIMAC emergency hotline before production]
 - **Available:** 24 hours, 7 days a week
 - **Languages:** Spanish, English
 - **Services:**
@@ -341,6 +341,7 @@ After emergency treatment:
 ## Emergency Contact Information
 
 ### RIMAC Emergency Hotline
+**IMPORTANT:** Replace with actual emergency hotline number before production deployment.
 Available 24/7 for all members
 
 ### National Emergency Numbers
@@ -350,8 +351,10 @@ Available 24/7 for all members
 - **National Police:** 105
 
 ### Crisis Hotlines
-- Suicide Prevention: [Number]
-- Domestic Violence: [Number]
-- Poison Control: [Number]
-- Mental Health Crisis: [Number]
+- Suicide Prevention: [PLACEHOLDER - Add actual number]
+- Domestic Violence: [PLACEHOLDER - Add actual number]
+- Poison Control: [PLACEHOLDER - Add actual number]
+- Mental Health Crisis: [PLACEHOLDER - Add actual number]
+
+**NOTE:** All placeholder numbers must be replaced with actual emergency contact numbers before production use.
 `;
