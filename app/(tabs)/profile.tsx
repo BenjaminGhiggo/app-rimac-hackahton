@@ -93,6 +93,8 @@ const PROFILE_DATA = {
       enTratamiento: true,
       tratamiento: 'Hipertensión y Diabetes Tipo II',
       recetasActivas: ['Metformina 500mg', 'Enalapril 10mg'],
+      indicaciones: '• Realizar ejercicio ligero 30 minutos diarios\n• Dieta baja en sal y carbohidratos simples\n• Monitorear glucosa cada mañana\n• Control de presión arterial 2 veces por semana',
+      recomendaciones: '• Próxima cita en 2 semanas\n• Realizar análisis de laboratorio en 3 semanas\n• Consultar si presenta mareos o visión borrosa',
     },
     {
       id: 2,
@@ -104,6 +106,8 @@ const PROFILE_DATA = {
       enTratamiento: false,
       tratamiento: null,
       recetasActivas: [],
+      indicaciones: '• Evitar alimentos grasosos y ultraprocesados\n• Realizar actividad cardiovascular 3 veces por semana\n• Reducir consumo de alcohol\n• Mantener peso ideal',
+      recomendaciones: '• Próximo chequeo en 6 meses\n• Mantener revisiones preventivas anuales\n• Realizar electrocardiograma el próximo año',
     },
     {
       id: 3,
@@ -115,6 +119,8 @@ const PROFILE_DATA = {
       enTratamiento: false,
       tratamiento: null,
       recetasActivas: [],
+      indicaciones: '• Mantener rutina de ejercicio regular\n• Consumir 8 vasos de agua diaria\n• Dormir 7-8 horas diarias\n• Vacunación al día',
+      recomendaciones: '• Próximo chequeo en 1 año\n• Mantener estilos de vida saludables\n• Consultar ante cualquier síntoma',
     },
     {
       id: 4,
@@ -126,6 +132,8 @@ const PROFILE_DATA = {
       enTratamiento: true,
       tratamiento: 'Fibrilación Auricular',
       recetasActivas: ['Warfarina 5mg', 'Bisoprolol 5mg'],
+      indicaciones: '• Tomar medicamentos exactamente a la hora indicada\n• Evitar alimentos ricos en vitamina K\n• Realizar caminatas suaves diariamente\n• Controlar presión arterial 3 veces por semana',
+      recomendaciones: '• Monitoreo de INR (anticoagulación) cada mes\n• Próxima cita cardiológica en 3 semanas\n• Acudir a emergencia si presenta palpitaciones severas',
     },
   ],
 };
@@ -607,6 +615,26 @@ export default function ProfileScreen() {
                     ))}
                   </View>
                 )}
+
+                {/* Indicaciones del Doctor */}
+                <View style={styles.modalCard}>
+                  <View style={styles.modalCardHeader}>
+                    <Text style={styles.modalCardTitle}>📋 Indicaciones del Doctor</Text>
+                  </View>
+                  <View style={styles.instructionsBox}>
+                    <Text style={styles.instructionsText}>{selectedFamiliar.indicaciones}</Text>
+                  </View>
+                </View>
+
+                {/* Recomendaciones */}
+                <View style={styles.modalCard}>
+                  <View style={styles.modalCardHeader}>
+                    <Text style={styles.modalCardTitle}>✨ Recomendaciones</Text>
+                  </View>
+                  <View style={styles.recommendationsBox}>
+                    <Text style={styles.recommendationsText}>{selectedFamiliar.recomendaciones}</Text>
+                  </View>
+                </View>
 
                 {!selectedFamiliar.enTratamiento && selectedFamiliar.recetasActivas.length === 0 && (
                   <View style={styles.modalCard}>
@@ -1343,5 +1371,31 @@ const styles = StyleSheet.create({
     color: '#065F46',
     textAlign: 'center',
     paddingVertical: SPACING.lg,
+  },
+  instructionsBox: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+  },
+  instructionsText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#92400E',
+    lineHeight: 22,
+  },
+  recommendationsBox: {
+    backgroundColor: '#D1FAE5',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: '#10B981',
+  },
+  recommendationsText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#065F46',
+    lineHeight: 22,
   },
 });
