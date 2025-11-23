@@ -1,223 +1,375 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { User, Phone, Mail, MapPin, Shield, Heart, AlertCircle, CheckCircle } from 'lucide-react-native';
-import { apiService } from '../../services/api';
-import { USUARIO_ACTUAL } from '../../config/usuario';
+import { ChevronRight } from 'lucide-react-native';
+import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../../theme';
+import { EmergencyModal } from '../../components/EmergencyModal';
+
+// Datos mock de Marisol Herrera Bruno
+const PROFILE_DATA = {
+  nombre: 'Marisol Herrera Bruno',
+  edad: 47,
+  sexo: 'Femenino',
+  email: 'marisol.herrera@email.com',
+  telefono: '+51 987 654 321',
+  ubicacion: 'Lima, Perú - San Isidro',
+  
+  // Sistema de Puntos y Recompensas
+  puntos: {
+    totales: 2850,
+    disponibles: 2850,
+    nivelVIP: 'Oro',
+    proximoBeneficio: 3000,
+    descuentoActual: '15%',
+  },
+
+  // Salud
+  salud: {
+    grupoSanguineo: 'O+',
+    presion: '120/80 mmHg',
+    peso: 68,
+    estatura: 165,
+    imc: 24.9,
+    condiciones: ['Hipertensión Leve (Controlada)', 'Colesterol Elevado'],
+    medicamentos: [
+      { nombre: 'Lisinopril 10mg', frecuencia: 'Diaria', activo: true },
+      { nombre: 'Atorvastatina 20mg', frecuencia: 'Nocturna', activo: true },
+    ],
+    alergias: ['Penicilina', 'Sulfamidas'],
+  },
+
+  // Citas
+  citas: {
+    este_anio: 8,
+    proximas: [
+      {
+        id: 1,
+        especialidad: 'Cardiología',
+        doctor: 'Dr. Rafael Montoya',
+        fecha: '2025-11-28',
+        hora: '14:30',
+        clinica: 'Clínica Privada RIMAC',
+        estado: 'Confirmada',
+      },
+      {
+        id: 2,
+        especialidad: 'Endocrinología',
+        doctor: 'Dra. Patricia Saenz',
+        fecha: '2025-12-10',
+        hora: '09:00',
+        clinica: 'Hospital General RIMAC',
+        estado: 'Pendiente',
+      },
+    ],
+  },
+
+  // Cuidador
+  cuidador: {
+    nombre: 'Brigitte Chavez Herrera',
+    relacion: 'Hija',
+    telefono: '+51 987 654 321',
+    activo: true,
+  },
+
+  // Beneficios
+  beneficios: [
+    { titulo: '20% Descuento en Consultas', estado: 'Activo' },
+    { titulo: 'Acceso Prioritario a Citas', estado: 'Activo' },
+    { titulo: 'Envío Gratis Medicamentos', estado: 'Activo por 3 meses' },
+    { titulo: 'Asesoramiento Nutricional Gratis', estado: 'Disponible' },
+  ],
+};
 
 export default function ProfileScreen() {
-  const [usuario, setUsuario] = useState<any>(null);
-  const [poliza, setPoliza] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
 
-  useEffect(() => {
-    cargarDatos();
+  const toggleSection = useCallback((section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  }, [expandedSection]);
+
+  const handleEmergencyPress = useCallback(() => {
+    setEmergencyModalVisible(true);
   }, []);
 
-  const cargarDatos = async () => {
-    try {
-      const data = await apiService.obtenerDatosUsuario(USUARIO_ACTUAL) as any;
-      setUsuario(data.usuario);
-      setPoliza(data.poliza);
-    } catch (error) {
-      console.error('Error cargando datos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleEmergencyConfirm = useCallback((location: any, consent: any) => {
+    setEmergencyModalVisible(false);
+    
+    Alert.alert(
+      '✅ Emergencia Activada',
+      `Ambulancia en camino a ${PROFILE_DATA.ubicacion}. Tiempo estimado: 8-12 minutos. Se ha notificado a ${PROFILE_DATA.cuidador.nombre}.`,
+      [{ text: 'Entendido', style: 'default' }]
+    );
 
-  const calcularEdad = (fechaNacimiento: string) => {
+    // Aquí se enviaría la información al backend
+    console.log('Emergencia enviada:', {
+      usuario: PROFILE_DATA.nombre,
+      telefono: PROFILE_DATA.telefono,
+      ubicacion: PROFILE_DATA.ubicacion,
+      coordenadas: location,
+      consentimientos: consent,
+      cuidador: PROFILE_DATA.cuidador.nombre,
+    });
+  }, []);
+
+  const calcularDiasParaCita = (fechaCita: string) => {
     const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-    return edad;
+    const cita = new Date(fechaCita);
+    const diferencia = cita.getTime() - hoy.getTime();
+    const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
+    return dias;
   };
 
-  if (loading) {
-    return (
-      <LinearGradient colors={['#667eea', '#764ba2', '#f093fb']} style={styles.gradient}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loadingText}>Cargando perfil...</Text>
-        </View>
-      </LinearGradient>
-    );
-  }
-
-  if (!usuario) {
-    return (
-      <LinearGradient colors={['#667eea', '#764ba2', '#f093fb']} style={styles.gradient}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>No se pudieron cargar los datos</Text>
-        </View>
-      </LinearGradient>
-    );
-  }
+  const formatearFecha = (fecha: string) => {
+    return new Date(fecha).toLocaleDateString('es-PE', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2', '#f093fb']} style={styles.gradient}>
+    <LinearGradient
+      colors={[RIMAC_COLORS.primary, RIMAC_COLORS.primaryDark]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* HEADER - FONDO ROJO CON TEXTO BLANCO */}
         <View style={styles.header}>
-      <View style={styles.iconContainer}>
-            <BlurView intensity={80} tint="light" style={styles.iconBlur}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.iconGradient}
-              >
-                <User size={60} color="#fff" strokeWidth={1.5} />
-              </LinearGradient>
-            </BlurView>
+          <View style={styles.profileImageContainer}>
+            <LinearGradient
+              colors={['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.15)']}
+              style={styles.profileImage}
+            >
+              <Text style={styles.initials}>MH</Text>
+            </LinearGradient>
           </View>
-          <Text style={styles.name}>{usuario.nombre}</Text>
-          <Text style={styles.age}>{calcularEdad(usuario.fechaNacimiento)} años</Text>
-          <View style={styles.decorativeCircle1} />
-          <View style={styles.decorativeCircle2} />
+
+          <Text style={styles.name}>{PROFILE_DATA.nombre}</Text>
+          <View style={styles.basicInfo}>
+            <Text style={styles.basicInfoText}>{PROFILE_DATA.edad} años • {PROFILE_DATA.sexo}</Text>
+            <Text style={styles.locationText}>📍 {PROFILE_DATA.ubicacion}</Text>
+          </View>
         </View>
 
+        {/* RIMAC POINTS - CARD BLANCA CON TEXTO OSCURO */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información Personal</Text>
-          
-          <View style={styles.infoCard}>
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <Phone size={20} color="#fff" />
-                <Text style={styles.infoText}>{usuario.telefono}</Text>
-              </LinearGradient>
-            </BlurView>
-          </View>
+          <View style={styles.pointsCard}>
+            <View style={styles.pointsHeader}>
+              <View>
+                <Text style={styles.pointsLabel}>🏆 RIMAC POINTS</Text>
+                <Text style={styles.pointsValue}>{PROFILE_DATA.puntos.totales.toLocaleString()}</Text>
+              </View>
+              <View style={styles.levelBadge}>
+                <Text style={styles.levelBadgeText}>{PROFILE_DATA.puntos.nivelVIP}</Text>
+              </View>
+            </View>
 
-          <View style={styles.infoCard}>
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <Mail size={20} color="#fff" />
-                <Text style={styles.infoText}>{usuario.email}</Text>
-              </LinearGradient>
-            </BlurView>
-          </View>
+            <View style={styles.pointsProgress}>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${(PROFILE_DATA.puntos.totales / PROFILE_DATA.puntos.proximoBeneficio) * 100}%` }
+                  ]} 
+                />
+              </View>
+              <Text style={styles.progressText}>
+                {PROFILE_DATA.puntos.proximoBeneficio - PROFILE_DATA.puntos.totales} puntos para próximo beneficio
+              </Text>
+            </View>
 
-          <View style={styles.infoCard}>
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <MapPin size={20} color="#fff" />
-                <Text style={styles.infoText}>{usuario.ubicacion.direccion}</Text>
-              </LinearGradient>
-            </BlurView>
+            <Text style={styles.discountText}>💰 Descuento actual: {PROFILE_DATA.puntos.descuentoActual} en servicios</Text>
           </View>
         </View>
 
-        {poliza && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Póliza y Plan</Text>
-            
-            <View style={styles.card}>
-              <BlurView intensity={80} tint="light" style={styles.glassCard}>
-                <LinearGradient
-                  colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                  style={styles.glassGradient}
-                >
-                  <View style={styles.cardHeader}>
-                    <Shield size={24} color="#fff" />
-                    <Text style={styles.cardTitle}>Plan {poliza.plan}</Text>
-                  </View>
-                  <Text style={styles.cardSubtitle}>Póliza: {usuario.poliza}</Text>
-                  <Text style={styles.cardSubtitle}>
-                    Vigencia: {new Date(poliza.vigencia.inicio).toLocaleDateString()} - {new Date(poliza.vigencia.fin).toLocaleDateString()}
-                  </Text>
-                </LinearGradient>
-              </BlurView>
+        {/* PROXIMAS CITAS - TARJETAS BLANCAS */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleDark}>📅 Próximas Citas ({PROFILE_DATA.citas.este_anio} en 2025)</Text>
+            <TouchableOpacity onPress={() => toggleSection('citas')}>
+              <ChevronRight 
+                size={24} 
+                color={RIMAC_COLORS.white} 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {PROFILE_DATA.citas.proximas.map((cita, idx) => (
+            <View key={idx} style={styles.citaCard}>
+              <View style={styles.citaHeader}>
+                <View style={styles.citaBadgeContainer}>
+                  <Text style={styles.citaBadge}>{cita.especialidad}</Text>
+                </View>
+                <Text style={[
+                  styles.citaEstado,
+                  cita.estado === 'Confirmada' ? styles.confirmedBadge : styles.pendingBadge
+                ]}>
+                  {cita.estado}
+                </Text>
+              </View>
+
+              <Text style={styles.citaDoctor}>{cita.doctor}</Text>
+              
+              <View style={styles.citaDetails}>
+                <View style={styles.citaDetailItem}>
+                  <Text style={styles.citaDetailLabel}>Fecha</Text>
+                  <Text style={styles.citaDetailValue}>{formatearFecha(cita.fecha)}</Text>
+                </View>
+                <View style={styles.citaDetailItem}>
+                  <Text style={styles.citaDetailLabel}>Hora</Text>
+                  <Text style={styles.citaDetailValue}>🕐 {cita.hora}</Text>
+                </View>
+              </View>
+
+              <View style={styles.citaDivider} />
+              <Text style={styles.citaClinica}>{cita.clinica}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* MEDICAMENTOS - TARJETAS BLANCAS */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleDark}>💊 Medicamentos Activos</Text>
+            <TouchableOpacity onPress={() => toggleSection('medicamentos')}>
+              <ChevronRight 
+                size={24} 
+                color={RIMAC_COLORS.white}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {PROFILE_DATA.salud.medicamentos.map((med, idx) => (
+            <View key={idx} style={styles.medicamentoCard}>
+              <View style={styles.medicamentoHeader}>
+                <View style={styles.medicamentoInfo}>
+                  <Text style={styles.medicamentoNombre}>{med.nombre}</Text>
+                  <Text style={styles.medicamentoFrecuencia}>⏰ {med.frecuencia}</Text>
+                </View>
+                <View style={styles.medicamentoBadge}>
+                  <Text style={styles.medicamentoBadgeText}>✓ Activo</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* SALUD - TARJETA BLANCA GRANDE */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitleDark}>❤️ Perfil de Salud</Text>
+
+          <View style={styles.healthCard}>
+            <View style={styles.healthGrid}>
+              <View style={styles.healthItem}>
+                <Text style={styles.healthLabel}>Grupo</Text>
+                <Text style={styles.healthValue}>{PROFILE_DATA.salud.grupoSanguineo}</Text>
+              </View>
+              <View style={styles.healthItem}>
+                <Text style={styles.healthLabel}>Presión</Text>
+                <Text style={styles.healthValue}>{PROFILE_DATA.salud.presion}</Text>
+              </View>
+              <View style={styles.healthItem}>
+                <Text style={styles.healthLabel}>Peso</Text>
+                <Text style={styles.healthValue}>{PROFILE_DATA.salud.peso} kg</Text>
+              </View>
+              <View style={styles.healthItem}>
+                <Text style={styles.healthLabel}>IMC</Text>
+                <Text style={styles.healthValue}>{PROFILE_DATA.salud.imc}</Text>
+              </View>
+            </View>
+
+            {PROFILE_DATA.salud.condiciones.length > 0 && (
+              <View style={styles.condicionesSection}>
+                <Text style={styles.subLabel}>Condiciones Controladas:</Text>
+                {PROFILE_DATA.salud.condiciones.map((cond, idx) => (
+                  <Text key={idx} style={styles.condicion}>✓ {cond}</Text>
+                ))}
+              </View>
+            )}
+
+            {PROFILE_DATA.salud.alergias.length > 0 && (
+              <View style={styles.alergiasSection}>
+                <Text style={styles.alertLabel}>⚠️ Alergias Importantes:</Text>
+                {PROFILE_DATA.salud.alergias.map((alergia, idx) => (
+                  <Text key={idx} style={styles.alergia}>{alergia}</Text>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* CUIDADOR - TARJETA BLANCA */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitleDark}>👨‍👩‍👧 Cuidador Asignado</Text>
+
+          <View style={styles.cuidadorCard}>
+            <View style={styles.cuidadorHeader}>
+              <View style={styles.cuidadorIcon}>
+                <Text style={styles.cuidadorInitial}>
+                  {PROFILE_DATA.cuidador.nombre.charAt(0)}
+                </Text>
+              </View>
+              <View style={styles.cuidadorInfo}>
+                <Text style={styles.cuidadorNombre}>{PROFILE_DATA.cuidador.nombre}</Text>
+                <Text style={styles.cuidadorRelacion}>{PROFILE_DATA.cuidador.relacion}</Text>
+              </View>
+            </View>
+            <View style={styles.cuidadorDivider} />
+            <View style={styles.cuidadorContacto}>
+              <Text style={styles.contactoLabel}>📞 {PROFILE_DATA.cuidador.telefono}</Text>
+              <Text style={styles.notificacionLabel}>✓ Recibe notificaciones de citas y medicinas</Text>
             </View>
           </View>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Perfil de Salud</Text>
-          
-          <View style={styles.card}>
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <View style={styles.cardHeader}>
-                  <Heart size={24} color="#fff" />
-                  <Text style={styles.cardTitle}>Información Médica</Text>
-                </View>
-                
-                <View style={styles.healthInfo}>
-                  <Text style={styles.healthLabel}>Grupo Sanguíneo:</Text>
-                  <Text style={styles.healthValue}>{usuario.perfilSalud.grupoSanguineo}</Text>
-                </View>
-
-                <View style={styles.healthInfo}>
-                  <Text style={styles.healthLabel}>IMC:</Text>
-                  <Text style={styles.healthValue}>{usuario.perfilSalud.imc} ({usuario.perfilSalud.peso} kg / {usuario.perfilSalud.estatura} cm)</Text>
-                </View>
-
-                {usuario.perfilSalud.condicionesCronicas.length > 0 && (
-                  <View style={styles.healthInfo}>
-                    <Text style={styles.healthLabel}>Condiciones Crónicas:</Text>
-                    {usuario.perfilSalud.condicionesCronicas.map((cond: string, index: number) => (
-                      <Text key={index} style={styles.healthValue}>• {cond}</Text>
-                    ))}
-                  </View>
-                )}
-
-                {usuario.perfilSalud.alergias.length > 0 && (
-                  <View style={styles.healthInfo}>
-                    <Text style={styles.healthLabel}>Alergias:</Text>
-                    {usuario.perfilSalud.alergias.map((alergia: string, index: number) => (
-                      <Text key={index} style={[styles.healthValue, styles.alertText]}>⚠️ {alergia}</Text>
-                    ))}
-                  </View>
-                )}
-              </LinearGradient>
-            </BlurView>
-          </View>
         </View>
 
+        {/* BENEFICIOS - TARJETAS BLANCAS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Onboarding</Text>
-          
-          <View style={styles.card}>
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <View style={styles.cardHeader}>
-                  {usuario.onboarding.completado ? (
-                    <CheckCircle size={24} color="#4caf50" />
-                  ) : (
-                    <AlertCircle size={24} color="#ffaa00" />
-                  )}
-                  <Text style={styles.cardTitle}>
-                    {usuario.onboarding.completado ? 'Completado' : 'Pendiente'}
-                  </Text>
-                </View>
-                {usuario.onboarding.completado && (
-                  <Text style={styles.cardSubtitle}>
-                    Fecha: {new Date(usuario.onboarding.fecha!).toLocaleDateString()}
-                  </Text>
-                )}
-              </LinearGradient>
-            </BlurView>
-      </View>
-    </View>
+          <Text style={styles.sectionTitleDark}>🎁 Beneficios Activos</Text>
+
+          {PROFILE_DATA.beneficios.map((beneficio, idx) => (
+            <View key={idx} style={styles.beneficioCard}>
+              <View style={styles.beneficioContent}>
+                <Text style={styles.beneficioTitulo}>{beneficio.titulo}</Text>
+                <Text style={styles.beneficioEstado}>{beneficio.estado}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* BOTÓN EMERGENCIA - ROJO LLAMATIVO */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.emergencyButton} 
+            activeOpacity={0.8}
+            onPress={handleEmergencyPress}
+          >
+            <LinearGradient
+              colors={['#EF4444', '#DC2626']}
+              style={styles.emergencyGradient}
+            >
+              <Text style={styles.emergencyButtonText}>🚨 BOTÓN DE EMERGENCIA</Text>
+              <Text style={styles.emergencySubtext}>Solicitar ambulancia RIMAC</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: SPACING['4xl'] }} />
       </ScrollView>
+
+      {/* EMERGENCY MODAL */}
+      <EmergencyModal
+        visible={emergencyModalVisible}
+        onClose={() => setEmergencyModalVisible(false)}
+        onConfirm={handleEmergencyConfirm}
+        userName={PROFILE_DATA.nombre}
+        userPhone={PROFILE_DATA.telefono}
+        userAddress={PROFILE_DATA.ubicacion}
+      />
     </LinearGradient>
   );
 }
@@ -229,164 +381,455 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
+  /* HEADER */
   header: {
-    backgroundColor: 'transparent',
-    padding: 30,
+    alignItems: 'center',
     paddingTop: 60,
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
+    paddingBottom: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 20,
+  profileImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: SPACING.lg,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 3,
+    borderColor: RIMAC_COLORS.white,
   },
-  iconBlur: {
+  profileImage: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  iconGradient: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+  initials: {
+    fontSize: 44,
+    fontWeight: '800',
+    color: RIMAC_COLORS.primary,
   },
   name: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#fff',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
-  age: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-  },
-  decorativeCircle1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    top: -50,
-    right: -50,
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    top: 100,
-    right: 50,
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  infoCard: {
-    marginBottom: 12,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  glassCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  glassGradient: {
-    flexDirection: 'row',
+  basicInfo: {
     alignItems: 'center',
-    padding: 18,
-    gap: 12,
   },
-  infoText: {
-    fontSize: 16,
-    color: '#fff',
-    flex: 1,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  card: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    marginBottom: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  cardSubtitle: {
+  basicInfoText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 4,
-    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.95)',
+    marginBottom: SPACING.xs,
+    fontWeight: '500',
   },
-  healthInfo: {
-    marginBottom: 12,
+  locationText: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '500',
   },
-  healthLabel: {
+
+  /* SECTION */
+  section: {
+    padding: SPACING.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  sectionTitleDark: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    flex: 1,
+  },
+
+  /* POINTS CARD - BLANCA */
+  pointsCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  pointsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.lg,
+  },
+  pointsLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[600],
+    marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  pointsValue: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: RIMAC_COLORS.primary,
+  },
+  levelBadge: {
+    backgroundColor: '#FFD700',
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+  },
+  levelBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+  },
+  pointsProgress: {
+    marginBottom: SPACING.md,
+  },
+  progressBar: {
+    height: 10,
+    backgroundColor: RIMAC_COLORS.gray[200],
+    borderRadius: BORDER_RADIUS.full,
+    overflow: 'hidden',
+    marginBottom: SPACING.sm,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: BORDER_RADIUS.full,
+  },
+  progressText: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '500',
+  },
+  discountText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
+    color: RIMAC_COLORS.primary,
+    marginTop: SPACING.sm,
+  },
+
+  /* CITAS - BLANCAS */
+  citaCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  citaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  citaBadgeContainer: {
+    backgroundColor: RIMAC_COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  citaBadge: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+  },
+  citaEstado: {
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  confirmedBadge: {
+    backgroundColor: '#D1FAE5',
+    color: '#065F46',
+  },
+  pendingBadge: {
+    backgroundColor: '#FEF3C7',
+    color: '#92400E',
+  },
+  citaDoctor: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.md,
+  },
+  citaDetails: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  citaDetailItem: {
+    flex: 1,
+  },
+  citaDetailLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[500],
+    marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  citaDetailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[800],
+  },
+  citaDivider: {
+    height: 1,
+    backgroundColor: RIMAC_COLORS.gray[200],
+    marginBottom: SPACING.md,
+  },
+  citaClinica: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '500',
+  },
+
+  /* MEDICAMENTOS - BLANCAS */
+  medicamentoCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  medicamentoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  medicamentoInfo: {
+    flex: 1,
+  },
+  medicamentoNombre: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  medicamentoFrecuencia: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '500',
+  },
+  medicamentoBadge: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: '#D1FAE5',
+  },
+  medicamentoBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+
+  /* SALUD - BLANCA */
+  healthCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  healthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  healthItem: {
+    flex: 1,
+    minWidth: 110,
+  },
+  healthLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[500],
+    marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   healthValue: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+  },
+  condicionesSection: {
+    marginBottom: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: RIMAC_COLORS.gray[200],
+    paddingTop: SPACING.lg,
+  },
+  subLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[800],
+    marginBottom: SPACING.md,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  condicion: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[700],
+    marginBottom: SPACING.sm,
     fontWeight: '500',
   },
-  alertText: {
-    color: '#ffeb3b',
+  alergiasSection: {
+    borderTopWidth: 1,
+    borderTopColor: RIMAC_COLORS.gray[200],
+    paddingTop: SPACING.lg,
   },
-  loadingContainer: {
-    flex: 1,
+  alertLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: SPACING.md,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    overflow: 'hidden',
+  },
+  alergia: {
+    fontSize: 13,
+    color: '#92400E',
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+    paddingLeft: SPACING.md,
+  },
+
+  /* CUIDADOR - BLANCA */
+  cuidadorCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cuidadorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  cuidadorIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: RIMAC_COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: SPACING.lg,
   },
-  loadingText: {
-    marginTop: 16,
+  cuidadorInitial: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: RIMAC_COLORS.white,
+  },
+  cuidadorInfo: {
+    flex: 1,
+  },
+  cuidadorNombre: {
     fontSize: 16,
-    color: '#fff',
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  cuidadorRelacion: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[600],
     fontWeight: '500',
   },
-  errorText: {
+  cuidadorDivider: {
+    height: 1,
+    backgroundColor: RIMAC_COLORS.gray[200],
+    marginBottom: SPACING.lg,
+  },
+  cuidadorContacto: {
+  },
+  contactoLabel: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[700],
+    marginBottom: SPACING.sm,
+    fontWeight: '500',
+  },
+  notificacionLabel: {
+    fontSize: 13,
+    color: '#065F46',
+    fontWeight: '600',
+  },
+
+  /* BENEFICIOS - BLANCAS */
+  beneficioCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  beneficioContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  beneficioTitulo: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[800],
+    flex: 1,
+  },
+  beneficioEstado: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#065F46',
+    marginLeft: SPACING.md,
+  },
+
+  /* EMERGENCY */
+  emergencyButton: {
+    borderRadius: BORDER_RADIUS.lg,
+    overflow: 'hidden',
+  },
+  emergencyGradient: {
+    padding: SPACING.xl,
+    alignItems: 'center',
+  },
+  emergencyButtonText: {
     fontSize: 16,
-    color: '#fff',
-    textAlign: 'center',
+    fontWeight: '800',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.xs,
+  },
+  emergencySubtext: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.95)',
     fontWeight: '500',
   },
 });

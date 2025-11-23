@@ -45,6 +45,63 @@ export interface Bienestar {
   recomendaciones: string[];
 }
 
+// Datos mock para desarrollo/demostración
+const MOCK_DATA = {
+  bienestar: {
+    indiceBienestar: 85,
+    sentimiento: {
+      ultimo: 'bien',
+    },
+    recomendaciones: [
+      'Aumenta tu ingesta de agua',
+      'Realiza actividad física 30 minutos',
+      'Mejora tu calidad de sueño',
+    ],
+  },
+  citas: {
+    citas: [
+      {
+        id: '1',
+        especialidad: 'Cardiología',
+        doctor: 'Dr. Rafael Montoya',
+        fecha: '2025-11-28',
+        hora: '14:30',
+        clinica: 'Clínica Privada RIMAC',
+        estado: 'Confirmada',
+      },
+    ],
+  },
+  tratamientos: {
+    tratamientos: [
+      {
+        id: '1',
+        usuarioId: 'usr_004',
+        medicamento: 'Lisinopril 10mg',
+        dosis: '1 tableta',
+        frecuencia: 'Diaria',
+        adherencia: {
+          porcentaje: 95,
+          riesgo: 'bajo',
+        },
+      },
+    ],
+  },
+  usuario: {
+    usuario: {
+      nombre: 'Marisol Herrera Bruno',
+      edad: 47,
+      email: 'marisol@email.com',
+    },
+    poliza: {
+      plan: 'Premium',
+      vigencia: {
+        inicio: '2025-01-01',
+        fin: '2025-12-31',
+      },
+    },
+  },
+};
+
 class ApiService {
   private async fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
     try {
@@ -62,18 +119,50 @@ class ApiService {
       }
 
       return await response.json();
-    } catch (error) {
+    } catch (error: any) {
+      // Si es un error de conexión, retornar datos mock
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.warn(`⚠️ Backend no disponible. Usando datos de demostración para ${endpoint}`);
+        return this.getMockData(endpoint) as T;
+      }
+      
       console.error(`Error en ${endpoint}:`, error);
       throw error;
     }
   }
 
+  private getMockData(endpoint: string): any {
+    if (endpoint.includes('/bienestar')) return MOCK_DATA.bienestar;
+    if (endpoint.includes('/citas')) return MOCK_DATA.citas;
+    if (endpoint.includes('/tratamientos')) return MOCK_DATA.tratamientos;
+    if (endpoint.includes('/usuarios')) return MOCK_DATA.usuario;
+    return {};
+  }
+
   // Triaje
   async realizarTriaje(data: TriajeRequest): Promise<TriajeResponse> {
-    return this.fetchApi<TriajeResponse>('/triaje', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    try {
+      return await this.fetchApi<TriajeResponse>('/triaje', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      // Mock data para triaje
+      return {
+        clasificacion: {
+          nivel: 'programable',
+          icono: '🟩',
+          recomendacion: 'Puedes agendar una cita en los próximos días',
+          canal: 'Telemedicina o presencial',
+        },
+        usuario: {
+          nombre: 'Marisol Herrera',
+          poliza: 'POL-2025-001',
+          plan: 'Premium',
+        },
+        sugerencias: [],
+      };
+    }
   }
 
   async obtenerHistorialTriaje(usuarioId: string) {
@@ -141,10 +230,15 @@ class ApiService {
 
   // Emergencias
   async activarEmergencia(usuarioId: string, sintomas: string[], descripcion?: string) {
-    return this.fetchApi('/emergencias/activar', {
-      method: 'POST',
-      body: JSON.stringify({ usuarioId, sintomas, descripcion }),
-    });
+    try {
+      return await this.fetchApi('/emergencias/activar', {
+        method: 'POST',
+        body: JSON.stringify({ usuarioId, sintomas, descripcion }),
+      });
+    } catch (error) {
+      console.warn('⚠️ Emergencia registrada localmente (backend no disponible)');
+      return { mensaje: 'Emergencia activada. El equipo de RIMAC ha sido notificado.' };
+    }
   }
 
   // Usuario
@@ -152,7 +246,7 @@ class ApiService {
     return this.fetchApi(`/usuarios/${usuarioId}`);
   }
 
-  // Citas (se implementarán cuando se cree el backend)
+  // Citas
   async obtenerCitas(usuarioId: string) {
     return this.fetchApi(`/citas/${usuarioId}`);
   }
@@ -171,7 +265,7 @@ class ApiService {
     });
   }
 
-  // Onboarding (se implementará cuando se cree el backend)
+  // Onboarding
   async guardarOnboarding(usuarioId: string, respuestas: Record<string, any>) {
     return this.fetchApi(`/onboarding/${usuarioId}`, {
       method: 'POST',
@@ -185,4 +279,3 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-

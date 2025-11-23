@@ -1,15 +1,21 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "RIMAC Salud AI",
+    "slug": "rimac-salud-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "rimac",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rimac.health"
+    },
+    "android": {
+      "package": "com.rimac.health",
+      "permissions": ["CAMERA", "INTERNET"]
     },
     "web": {
       "bundler": "metro",

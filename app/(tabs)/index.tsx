@@ -1,276 +1,318 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { apiService } from '../../services/api';
 import { USUARIO_ACTUAL } from '../../config/usuario';
+import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../../theme';
+import { ChevronRight, Heart, TrendingUp, Clock, MapPin, FileText, AlertCircle } from 'lucide-react-native';
+
+// Datos de usuario para demo
+const USER_DATA = {
+  nombre: 'Marisol',
+  apellido: 'Herrera Bruno',
+  edad: 47,
+  puntos: 2850,
+  proximaCita: {
+    especialista: 'Dr. Rafael Montoya',
+    especialidad: 'Cardiología',
+    fecha: '28 de noviembre',
+    hora: '14:30',
+    clinica: 'Clínica Privada RIMAC',
+  },
+  cuidador: {
+    nombre: 'Brigitte Chavez Herrera',
+    relacion: 'Hija',
+    activo: true,
+  },
+  indiceBienestar: 85,
+  medicamentosActivos: 2,
+};
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [bienestar, setBienestar] = useState<any>(null);
   const [citas, setCitas] = useState<any[]>([]);
-  const [tratamientos, setTratamientos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const handleTriaje = async () => {
-    try {
-      const resultado = await apiService.realizarTriaje({
-        usuarioId: USUARIO_ACTUAL,
-        sintomas: ['dolor de cabeza', 'fiebre'],
-        descripcion: 'Dolor de cabeza desde esta mañana'
-      });
-      
-      Alert.alert(
-        'Resultado del Triaje',
-        `${resultado.clasificacion.icono} ${resultado.clasificacion.recomendacion}`,
-        [{ text: 'OK' }]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo realizar el triaje. Verifique que el backend esté corriendo.');
-    }
-  };
 
   useEffect(() => {
     cargarDatos();
   }, []);
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
-      const [bienestarData, citasData, tratamientosData] = await Promise.all([
-        apiService.obtenerBienestar(USUARIO_ACTUAL).catch(() => null),
-        apiService.obtenerCitas(USUARIO_ACTUAL).catch(() => ({ citas: [] })),
-        apiService.obtenerTratamientos(USUARIO_ACTUAL).catch(() => ({ tratamientos: [] })),
+      const [bienestarData, citasData] = await Promise.all([
+        apiService.obtenerBienestar(USUARIO_ACTUAL),
+        apiService.obtenerCitas(USUARIO_ACTUAL),
       ]);
 
       setBienestar(bienestarData);
       setCitas((citasData as any)?.citas || []);
-      setTratamientos((tratamientosData as any)?.tratamientos || []);
     } catch (error) {
-      console.error('Error cargando datos:', error);
+      console.warn('⚠️ No se pudieron cargar todos los datos. Usando demostración.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleEmergencia = async () => {
-    Alert.alert(
-      '¿Activar Emergencia?',
-      'Se enviará una alerta a la central RIMAC',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Activar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await apiService.activarEmergencia(
-                USUARIO_ACTUAL,
-                ['dolor de pecho', 'dificultad para respirar'],
-                'Dolor intenso en el pecho'
-              );
-              Alert.alert('Emergencia Activada', 'La central RIMAC ha sido notificada');
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo activar la emergencia. Verifique que el backend esté corriendo.');
-            }
-          }
-        }
-      ]
-    );
-  };
+  const getIndiceColor = useCallback((indice: number) => {
+    if (indice >= 70) return '#10B981';
+    if (indice >= 50) return '#F59E0B';
+    return '#EF4444';
+  }, []);
 
-  const getIndiceColor = (indice: number) => {
-    if (indice >= 70) return '#4caf50';
-    if (indice >= 50) return '#ffaa00';
-    return '#ff4444';
-  };
+  const getIndiceLabel = useCallback((indice: number) => {
+    if (indice >= 80) return 'Excelente';
+    if (indice >= 60) return 'Bueno';
+    if (indice >= 40) return 'Normal';
+    return 'Requiere atención';
+  }, []);
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2', '#f093fb']}
+      colors={[RIMAC_COLORS.primary, RIMAC_COLORS.primaryDark]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* APP NAME - Logo y Nombre */}
+        <View style={styles.appHeader}>
+          <Text style={styles.appLogo}>🏥</Text>
+          <Text style={styles.appName}>RIMAC Salud AI</Text>
+          <Text style={styles.appTagline}>Asistente médico inteligente</Text>
+        </View>
+
+        {/* HEADER - Bienvenida personalizada */}
         <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.brand}>Rimqhali.ai</Text>
-            <Text style={styles.greeting}>Hola Brigitte 👋</Text>
-            <Text style={styles.tagline}>Tu asistente de salud inteligente</Text>
-          </View>
-          <View style={styles.decorativeCircle1} />
-          <View style={styles.decorativeCircle2} />
+          <Text style={styles.greeting}>Hola, {USER_DATA.nombre} 👋</Text>
+          <Text style={styles.tagline}>Tu asistente de salud integral</Text>
         </View>
 
+        {/* CARD PRINCIPAL - Triaje de Síntomas (CTA) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
-          
           <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={handleEmergencia}
+            style={styles.triageCard}
+            onPress={() => router.push('/triaje' as any)}
             activeOpacity={0.8}
           >
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 68, 68, 0.3)', 'rgba(255, 68, 68, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <Text style={styles.actionIcon}>🚨</Text>
-                <Text style={styles.actionTitle}>Emergencia</Text>
-                <Text style={styles.actionSubtitle}>Activar alerta RIMAC</Text>
-              </LinearGradient>
-            </BlurView>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard}
-            onPress={handleTriaje}
-            activeOpacity={0.8}
-          >
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <Text style={styles.actionIcon}>🏥</Text>
-                <Text style={styles.actionTitle}>Triaje de Síntomas</Text>
-                <Text style={styles.actionSubtitle}>Evaluar síntomas y obtener recomendación</Text>
-              </LinearGradient>
-            </BlurView>
+            <LinearGradient
+              colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
+              style={styles.triageContent}
+            >
+              <View style={styles.triageHeader}>
+                <View style={styles.triageIconContainer}>
+                  <Text style={styles.triageIcon}>🏥</Text>
+                </View>
+                <View style={styles.triageTextContainer}>
+                  <Text style={styles.triageTitle}>Evalúa tus Síntomas</Text>
+                  <Text style={styles.triageSubtitle}>
+                    Triaje inteligente con IA médica
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.triageFeatures}>
+                <Text style={styles.triageFeature}>
+                  ✓ Análisis de síntomas en tiempo real
+                </Text>
+                <Text style={styles.triageFeature}>
+                  ✓ Recomendación de especialidad
+                </Text>
+                <Text style={styles.triageFeature}>
+                  ✓ Nivel de urgencia evaluado
+                </Text>
+              </View>
+              <View style={styles.triageFooter}>
+                <Text style={styles.triageAction}>Iniciar evaluación →</Text>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-          </View>
-        ) : (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Resumen Rápido</Text>
-              
-              {bienestar && (
-                <TouchableOpacity
-                  style={styles.widgetCard}
-                  onPress={() => router.push('/bienestar' as any)}
-                  activeOpacity={0.8}
-                >
-                  <BlurView intensity={80} tint="light" style={styles.glassCard}>
-                    <LinearGradient
-                      colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                      style={styles.glassGradient}
-                    >
-                      <View style={styles.widgetHeader}>
-                        <View style={styles.widgetIconContainer}>
-                          <Text style={styles.widgetIcon}>📊</Text>
-                        </View>
-                        <View style={styles.widgetInfo}>
-                          <Text style={styles.widgetTitle}>Índice de Bienestar</Text>
-                          <Text style={styles.widgetSubtitle}>Última actualización</Text>
-                        </View>
-                        <View style={styles.widgetValue}>
-                          <Text style={[styles.widgetNumber, { color: getIndiceColor(bienestar.indiceBienestar) }]}>
-                            {bienestar.indiceBienestar}
-                          </Text>
-                          <Text style={styles.widgetUnit}>/100</Text>
-                        </View>
-                      </View>
-                    </LinearGradient>
-                  </BlurView>
-                </TouchableOpacity>
-              )}
-
-              {citas.length > 0 && (
-                <TouchableOpacity
-                  style={styles.widgetCard}
-                  onPress={() => router.push('/citas' as any)}
-                  activeOpacity={0.8}
-                >
-                  <BlurView intensity={80} tint="light" style={styles.glassCard}>
-                    <LinearGradient
-                      colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                      style={styles.glassGradient}
-                    >
-                      <View style={styles.widgetHeader}>
-                        <View style={styles.widgetIconContainer}>
-                          <Text style={styles.widgetIcon}>📅</Text>
-                        </View>
-                        <View style={styles.widgetInfo}>
-                          <Text style={styles.widgetTitle}>Próxima Cita</Text>
-                          <Text style={styles.widgetSubtitle}>
-                            {citas[0].especialidad} - {new Date(citas[0].fecha).toLocaleDateString()}
-                          </Text>
-                        </View>
-                        <Text style={styles.widgetArrow}>›</Text>
-                      </View>
-                    </LinearGradient>
-                  </BlurView>
-                </TouchableOpacity>
-              )}
-
-              {tratamientos.length > 0 && (
-                <TouchableOpacity
-                  style={styles.widgetCard}
-                  onPress={() => router.push('/tratamientos' as any)}
-                  activeOpacity={0.8}
-                >
-                  <BlurView intensity={80} tint="light" style={styles.glassCard}>
-                    <LinearGradient
-                      colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                      style={styles.glassGradient}
-                    >
-                      <View style={styles.widgetHeader}>
-                        <View style={styles.widgetIconContainer}>
-                          <Text style={styles.widgetIcon}>💊</Text>
-                        </View>
-                        <View style={styles.widgetInfo}>
-                          <Text style={styles.widgetTitle}>Tratamientos Activos</Text>
-                          <Text style={styles.widgetSubtitle}>
-                            {tratamientos.length} tratamiento{tratamientos.length !== 1 ? 's' : ''}
-                          </Text>
-                        </View>
-                        <Text style={styles.widgetArrow}>›</Text>
-                      </View>
-                    </LinearGradient>
-                  </BlurView>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Módulos Disponibles</Text>
-              
-              <View style={styles.modulesGrid}>
-                {[
-                  { icon: '🩺', title: 'Triaje', route: '/triaje' },
-                  { icon: '💊', title: 'Tratamientos', route: '/tratamientos' },
-                  { icon: '📊', title: 'Bienestar', route: '/bienestar' },
-                  { icon: '🎁', title: 'Beneficios', route: '/beneficios' },
-                  { icon: '📅', title: 'Citas', route: '/citas' },
-                  { icon: '🏆', title: 'Gamificación', route: '/gamificacion' },
-                ].map((module, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.moduleCard}
-                    onPress={() => router.push(module.route as any)}
-                    activeOpacity={0.8}
-                  >
-                    <BlurView intensity={80} tint="light" style={styles.glassCard}>
-                      <LinearGradient
-                        colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                        style={styles.glassGradient}
-                      >
-                        <Text style={styles.moduleIcon}>{module.icon}</Text>
-                        <Text style={styles.moduleTitle}>{module.title}</Text>
-                      </LinearGradient>
-                    </BlurView>
-                  </TouchableOpacity>
-                ))}
+        {/* RIMAC POINTS - Destacado */}
+        <View style={styles.section}>
+          <View style={styles.pointsCard}>
+            <View style={styles.pointsHeader}>
+              <View>
+                <Text style={styles.pointsLabel}>🏆 RIMAC POINTS</Text>
+                <Text style={styles.pointsValue}>{USER_DATA.puntos.toLocaleString()}</Text>
+              </View>
+              <View style={styles.pointsBadge}>
+                <Text style={styles.pointsBadgeText}>Oro</Text>
               </View>
             </View>
-          </>
+            <View style={styles.pointsInfo}>
+              <Text style={styles.pointsText}>
+                💰 15% descuento en servicios médicos
+              </Text>
+              <Text style={styles.pointsText}>
+                📅 Vigente hasta diciembre 2025
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* PRÓXIMA CITA - Urgente */}
+        {citas.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📅 Tu Próxima Cita</Text>
+            
+            <TouchableOpacity 
+              style={styles.citaCard}
+              onPress={() => router.push('/citas' as any)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.citaLeft}>
+                <View style={styles.citaBadge}>
+                  <Text style={styles.citaBadgeText}>{citas[0]?.especialidad}</Text>
+                </View>
+                <Text style={styles.citaDoctor}>{citas[0]?.doctor}</Text>
+                <Text style={styles.citaDate}>{citas[0]?.fecha}</Text>
+              </View>
+              <View style={styles.citaRight}>
+                <Text style={styles.citaTime}>🕐 {citas[0]?.hora}</Text>
+                <ChevronRight size={24} color={RIMAC_COLORS.white} />
+              </View>
+            </TouchableOpacity>
+          </View>
         )}
+
+        {/* RESUMEN DE SALUD */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>❤️ Resumen de Salud</Text>
+          
+          <View style={styles.healthGrid}>
+            {/* Índice de Bienestar */}
+            <TouchableOpacity 
+              style={styles.healthCard}
+              onPress={() => router.push('/bienestar' as any)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.healthCardContent}>
+                <Text style={styles.healthIcon}>📊</Text>
+                <Text style={styles.healthLabel}>Bienestar</Text>
+                <Text 
+                  style={[
+                    styles.healthValue,
+                    { color: getIndiceColor(USER_DATA.indiceBienestar) }
+                  ]}
+                >
+                  {USER_DATA.indiceBienestar}
+                </Text>
+                <Text style={styles.healthStatus}>
+                  {getIndiceLabel(USER_DATA.indiceBienestar)}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Medicamentos */}
+            <TouchableOpacity 
+              style={styles.healthCard}
+              onPress={() => router.push('/tratamientos' as any)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.healthCardContent}>
+                <Text style={styles.healthIcon}>💊</Text>
+                <Text style={styles.healthLabel}>Medicamentos</Text>
+                <Text style={styles.healthValue}>
+                  {USER_DATA.medicamentosActivos}
+                </Text>
+                <Text style={styles.healthStatus}>Activos</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* INFORMACIÓN DEL CUIDADOR */}
+        {USER_DATA.cuidador.activo && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>👨‍👩‍👧 Tu Cuidador</Text>
+            
+            <View style={styles.cuidadorCard}>
+              <View style={styles.cuidadorInfo}>
+                <View style={styles.cuidadorAvatar}>
+                  <Text style={styles.cuidadorLetter}>
+                    {USER_DATA.cuidador.nombre.charAt(0)}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.cuidadorName}>{USER_DATA.cuidador.nombre}</Text>
+                  <Text style={styles.cuidadorRelation}>
+                    {USER_DATA.cuidador.relacion}
+                  </Text>
+                  <Text style={styles.cuidadorStatus}>
+                    ✓ Recibe notificaciones de citas
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* RESUMEN MÉDICO PARA COMPARTIR */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📄 Resumen para Médico</Text>
+          
+          <TouchableOpacity 
+            style={styles.summaryCard}
+            activeOpacity={0.8}
+          >
+            <View style={styles.summaryContent}>
+              <FileText size={24} color={RIMAC_COLORS.primary} />
+              <View style={styles.summaryText}>
+                <Text style={styles.summaryTitle}>Generar Resumen</Text>
+                <Text style={styles.summarySub}>
+                  Historial médico para llevar a consulta
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* CLÍNICAS CERCANAS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🏥 Clínicas Cercanas</Text>
+          
+          <View style={styles.clinicsContainer}>
+            <TouchableOpacity style={styles.clinicCard} activeOpacity={0.8}>
+              <Text style={styles.clinicIcon}>🏥</Text>
+              <Text style={styles.clinicName}>Clínica Privada</Text>
+              <Text style={styles.clinicDistance}>2.3 km</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.clinicCard} activeOpacity={0.8}>
+              <Text style={styles.clinicIcon}>🏥</Text>
+              <Text style={styles.clinicName}>Hospital General</Text>
+              <Text style={styles.clinicDistance}>5.1 km</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ACCESO RÁPIDO A MÓDULOS */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⚡ Acceso Rápido</Text>
+          
+          <View style={styles.modulesGrid}>
+            {[
+              { icon: '📅', title: 'Agendar Cita', route: '/citas' },
+              { icon: '🎁', title: 'Beneficios', route: '/beneficios' },
+              { icon: '🏆', title: 'Logros', route: '/gamificacion' },
+              { icon: '⚙️', title: 'Configuración', route: '/settings' },
+            ].map((module, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.moduleCard}
+                onPress={() => router.push(module.route as any)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.moduleIcon}>{module.icon}</Text>
+                <Text style={styles.moduleTitle}>{module.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={{ height: SPACING['4xl'] }} />
       </ScrollView>
     </LinearGradient>
   );
@@ -283,194 +325,402 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    padding: 30,
-    paddingTop: 70,
-    position: 'relative',
-    overflow: 'hidden',
+
+  /* APP HEADER */
+  appHeader: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: 50,
+    paddingBottom: SPACING.lg,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
-  headerContent: {
-    zIndex: 2,
+  appLogo: {
+    fontSize: 40,
+    marginBottom: SPACING.sm,
   },
-  brand: {
-    fontSize: 42,
+  appName: {
+    fontSize: 28,
     fontWeight: '800',
-    color: '#fff',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.xs,
     letterSpacing: -0.5,
+    fontStyle: 'italic',
+    fontFamily: 'System',
+  },
+  appTagline: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontFamily: 'System',
+  },
+
+  /* HEADER */
+  header: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.lg,
   },
   greeting: {
-    fontSize: 20,
-    color: '#fff',
-    marginBottom: 4,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '800',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.sm,
   },
   tagline: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '400',
+    fontWeight: '500',
   },
-  decorativeCircle1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    top: -50,
-    right: -50,
-    zIndex: 1,
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    top: 100,
-    right: 50,
-    zIndex: 1,
-  },
+
+  /* SECTION */
   section: {
-    padding: 20,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#fff',
-    marginBottom: 20,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.md,
   },
-  actionCard: {
-    marginBottom: 16,
-    borderRadius: 20,
+
+  /* TRIAJE CARD - Principal CTA */
+  triageCard: {
+    borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  glassCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
+  triageContent: {
+    padding: SPACING.lg,
   },
-  glassGradient: {
-    padding: 24,
-    borderRadius: 20,
+  triageHeader: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+    alignItems: 'center',
   },
-  actionIcon: {
-    fontSize: 40,
-    marginBottom: 12,
+  triageIconContainer: {
+    width: 50,
+    height: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: BORDER_RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  actionTitle: {
-    fontSize: 20,
+  triageIcon: {
+    fontSize: 32,
+  },
+  triageTextContainer: {
+    flex: 1,
+  },
+  triageTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
-    marginBottom: 6,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.xs,
   },
-  actionSubtitle: {
-    fontSize: 14,
+  triageSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  triageFeatures: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  triageFeature: {
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '400',
+    marginBottom: SPACING.sm,
+    fontWeight: '500',
   },
+  triageFooter: {
+    alignItems: 'center',
+  },
+  triageAction: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+  },
+
+  /* POINTS CARD */
+  pointsCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  pointsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.lg,
+  },
+  pointsLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[600],
+    marginBottom: SPACING.xs,
+    textTransform: 'uppercase',
+  },
+  pointsValue: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: RIMAC_COLORS.primary,
+  },
+  pointsBadge: {
+    backgroundColor: '#FFD700',
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+  },
+  pointsBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+  },
+  pointsInfo: {
+    borderTopWidth: 1,
+    borderTopColor: RIMAC_COLORS.gray[200],
+    paddingTop: SPACING.lg,
+  },
+  pointsText: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[700],
+    marginBottom: SPACING.sm,
+    fontWeight: '500',
+  },
+
+  /* CITA CARD */
+  citaCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  citaLeft: {
+    flex: 1,
+  },
+  citaRight: {
+    alignItems: 'flex-end',
+    gap: SPACING.sm,
+  },
+  citaBadge: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    marginBottom: SPACING.sm,
+    alignSelf: 'flex-start',
+  },
+  citaBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+  },
+  citaDoctor: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.xs,
+  },
+  citaDate: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  citaTime: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: RIMAC_COLORS.white,
+  },
+
+  /* HEALTH GRID */
+  healthGrid: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+  },
+  healthCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  healthCardContent: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  healthIcon: {
+    fontSize: 32,
+    marginBottom: SPACING.md,
+  },
+  healthLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: SPACING.sm,
+  },
+  healthValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: SPACING.xs,
+  },
+  healthStatus: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+
+  /* CUIDADOR CARD */
+  cuidadorCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cuidadorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.lg,
+  },
+  cuidadorAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: RIMAC_COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cuidadorLetter: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: RIMAC_COLORS.white,
+  },
+  cuidadorName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  cuidadorRelation: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    marginBottom: SPACING.xs,
+    fontWeight: '500',
+  },
+  cuidadorStatus: {
+    fontSize: 11,
+    color: '#10B981',
+    fontWeight: '600',
+  },
+
+  /* SUMMARY CARD */
+  summaryCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.lg,
+  },
+  summaryText: {
+    flex: 1,
+  },
+  summaryTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  summarySub: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '500',
+  },
+
+  /* CLINICS */
+  clinicsContainer: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+  },
+  clinicCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  clinicIcon: {
+    fontSize: 32,
+    marginBottom: SPACING.md,
+  },
+  clinicName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  clinicDistance: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '600',
+  },
+
+  /* MODULES GRID */
   modulesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: SPACING.lg,
     justifyContent: 'space-between',
   },
   moduleCard: {
     width: '48%',
-    marginBottom: 16,
-    borderRadius: 20,
-    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   moduleIcon: {
-    fontSize: 36,
-    marginBottom: 12,
-    textAlign: 'center',
+    fontSize: 32,
+    marginBottom: SPACING.md,
   },
   moduleTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  widgetCard: {
-    marginBottom: 16,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  widgetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    padding: 20,
-  },
-  widgetIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  widgetIcon: {
-    fontSize: 24,
-  },
-  widgetInfo: {
-    flex: 1,
-  },
-  widgetTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  widgetSubtitle: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '400',
-  },
-  widgetValue: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  widgetNumber: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  widgetUnit: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  widgetArrow: {
-    fontSize: 28,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '300',
+    fontWeight: '700',
+    color: RIMAC_COLORS.white,
+    textAlign: 'center',
   },
 });
