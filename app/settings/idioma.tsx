@@ -1,124 +1,244 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Globe, Check } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { RIMAC_COLORS } from '../../theme/colors';
 
 export default function IdiomaScreen() {
   const [idiomaSeleccionado, setIdiomaSeleccionado] = useState('es');
 
   const idiomas = [
-    { codigo: 'es', nombre: 'Español', nativo: 'Español' },
-    { codigo: 'en', nombre: 'English', nativo: 'Inglés' },
-    { codigo: 'pt', nombre: 'Português', nativo: 'Portugués' },
+    { codigo: 'es', nombre: 'Español', nativo: 'Español', flag: '🇪🇸' },
+    { codigo: 'en', nombre: 'English', nativo: 'Inglés', flag: '🇺🇸' },
+    { codigo: 'pt', nombre: 'Português', nativo: 'Portugués', flag: '🇧🇷' },
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Globe size={32} color="#0066cc" />
-        <Text style={styles.title}>Idioma</Text>
-        <Text style={styles.subtitle}>Selecciona tu idioma preferido</Text>
-      </View>
-
-      <View style={styles.section}>
-        {idiomas.map((idioma) => (
-          <TouchableOpacity
-            key={idioma.codigo}
-            style={[
-              styles.option,
-              idiomaSeleccionado === idioma.codigo && styles.optionSelected
-            ]}
-            onPress={() => setIdiomaSeleccionado(idioma.codigo)}
-          >
-            <View style={styles.optionLeft}>
-              <Text style={styles.optionName}>{idioma.nombre}</Text>
-              <Text style={styles.optionNative}>{idioma.nativo}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={[RIMAC_COLORS.white, '#F9FAFB']}
+        style={styles.gradient}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.backButton} />
+            <Text style={styles.headerTitle}>Idioma</Text>
+            <View style={styles.headerIcon}>
+              <Globe size={24} color={RIMAC_COLORS.primary} strokeWidth={1.5} />
             </View>
-            {idiomaSeleccionado === idioma.codigo && (
-              <Check size={24} color="#0066cc" />
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoText}>
-            El idioma seleccionado se aplicará a toda la aplicación. Algunos cambios pueden requerir reiniciar la app.
+          </View>
+          <Text style={styles.headerSubtitle}>
+            Selecciona tu idioma preferido para la app
           </Text>
         </View>
-      </View>
-    </ScrollView>
+
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Idiomas Disponibles</Text>
+            </View>
+
+            {idiomas.map((idioma, index) => (
+              <TouchableOpacity
+                key={idioma.codigo}
+                style={[
+                  styles.languageCard,
+                  idiomaSeleccionado === idioma.codigo &&
+                    styles.languageCardSelected,
+                ]}
+                onPress={() => setIdiomaSeleccionado(idioma.codigo)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.languageContent}>
+                  <View style={styles.flagContainer}>
+                    <Text style={styles.flag}>{idioma.flag}</Text>
+                  </View>
+                  <View style={styles.languageText}>
+                    <Text style={styles.languageName}>{idioma.nombre}</Text>
+                    <Text style={styles.languageNative}>{idioma.nativo}</Text>
+                  </View>
+                </View>
+                {idiomaSeleccionado === idioma.codigo && (
+                  <View style={styles.checkContainer}>
+                    <Check
+                      size={24}
+                      color={RIMAC_COLORS.primary}
+                      strokeWidth={2}
+                    />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Info Card */}
+          <View style={styles.section}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>ℹ️ Cambios de idioma</Text>
+              <Text style={styles.infoText}>
+                El idioma seleccionado se aplicará a toda la aplicación. Algunos cambios pueden requerir reiniciar la app.
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: RIMAC_COLORS.white,
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+
+  /* Header */
   header: {
-    backgroundColor: '#0066cc',
-    padding: 30,
-    paddingTop: 60,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: RIMAC_COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: RIMAC_COLORS.gray[100],
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#e0e0e0',
-  },
-  section: {
-    padding: 20,
-  },
-  option: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  optionSelected: {
+  backButton: {
+    width: 40,
+    height: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: RIMAC_COLORS.primary + '08',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+
+  /* Sections */
+  section: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  sectionHeader: {
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  /* Language Cards */
+  languageCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: RIMAC_COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: RIMAC_COLORS.gray[200],
+    marginBottom: 10,
+  },
+  languageCardSelected: {
+    backgroundColor: RIMAC_COLORS.primary + '08',
+    borderColor: RIMAC_COLORS.primary,
     borderWidth: 2,
-    borderColor: '#0066cc',
-    backgroundColor: '#e3f2fd',
   },
-  optionLeft: {
+  languageContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     flex: 1,
   },
-  optionName: {
-    fontSize: 18,
+  flagContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: RIMAC_COLORS.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flag: {
+    fontSize: 24,
+  },
+  languageText: {
+    flex: 1,
+  },
+  languageName: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: 2,
   },
-  optionNative: {
-    fontSize: 14,
-    color: '#666',
+  languageNative: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[500],
+    fontWeight: '400',
   },
+  checkContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: RIMAC_COLORS.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* Info Card */
   infoCard: {
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: RIMAC_COLORS.primary + '08',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#0066cc',
+    borderLeftColor: RIMAC_COLORS.primary,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: RIMAC_COLORS.primary,
+    marginBottom: 6,
   },
   infoText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[700],
+    fontWeight: '400',
+    lineHeight: 18,
   },
 });
 

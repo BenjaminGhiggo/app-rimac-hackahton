@@ -30,6 +30,7 @@ export const RIMAC_COLORS = {
   warning: '#F59E0B', // Amarillo/Naranja
   error: '#EF4444', // Rojo para errores
   info: '#3B82F6', // Azul (información)
+  warning2: '#FBBF24', // Amarillo alternativo para warnings
 
   // Colores semitransparentes
   backdrop: 'rgba(0, 0, 0, 0.4)',

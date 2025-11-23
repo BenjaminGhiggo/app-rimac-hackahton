@@ -1,17 +1,43 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Bell, Lock, Globe, HelpCircle, LogOut } from 'lucide-react-native';
+import { Bell, Lock, Globe, HelpCircle, LogOut, Settings, ChevronRight, Smartphone, Eye } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { RIMAC_COLORS } from '../../theme/colors';
 
 export default function SettingsScreen() {
   const router = useRouter();
 
   const settingsOptions = [
-    { icon: Bell, label: 'Notificaciones', color: '#FF9500', route: '/settings/notificaciones' },
-    { icon: Lock, label: 'Privacidad', color: '#007AFF', route: '/settings/privacidad' },
-    { icon: Globe, label: 'Idioma', color: '#34C759', route: '/settings/idioma' },
-    { icon: HelpCircle, label: 'Ayuda', color: '#5856D6', route: '/settings/ayuda' },
+    {
+      icon: Bell,
+      label: 'Notificaciones',
+      description: 'Configura alertas y recordatorios',
+      route: '/settings/notificaciones',
+    },
+    {
+      icon: Lock,
+      label: 'Privacidad y Seguridad',
+      description: 'Protege tu información personal',
+      route: '/settings/privacidad',
+    },
+    {
+      icon: Globe,
+      label: 'Idioma',
+      description: 'Cambia el idioma de la app',
+      route: '/settings/idioma',
+    },
+    {
+      icon: Eye,
+      label: 'Accesibilidad',
+      description: 'Ajustes de visualización',
+      route: '/settings/ayuda',
+    },
+    {
+      icon: Smartphone,
+      label: 'Sobre RIMAC Salud AI',
+      description: 'Versión 1.0.0 • Información legal',
+      route: '/settings/ayuda',
+    },
   ];
 
   const handleOptionPress = (route: string) => {
@@ -29,179 +55,355 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: () => {
             Alert.alert('Sesión cerrada', 'Has cerrado sesión exitosamente');
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   return (
-    <LinearGradient colors={['#667eea', '#764ba2', '#f093fb']} style={styles.gradient}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Ajustes</Text>
-          <Text style={styles.subtitle}>Rimqhali.ai</Text>
-          <View style={styles.decorativeCircle1} />
-          <View style={styles.decorativeCircle2} />
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.optionsContainer}>
-            {settingsOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.optionWrapper}
-                onPress={() => handleOptionPress(option.route)}
-                activeOpacity={0.8}
-              >
-                <BlurView intensity={80} tint="light" style={styles.glassCard}>
-                  <LinearGradient
-                    colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.1)']}
-                    style={styles.glassGradient}
-                  >
-                    <View style={styles.optionLeft}>
-                      <View style={[styles.iconContainer, { backgroundColor: `${option.color}30` }]}>
-                        <option.icon size={24} color={option.color} />
-                      </View>
-                      <Text style={styles.optionLabel}>{option.label}</Text>
-                    </View>
-                    <Text style={styles.arrow}>›</Text>
-                  </LinearGradient>
-                </BlurView>
-              </TouchableOpacity>
-            ))}
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={[RIMAC_COLORS.white, '#F9FAFB']}
+        style={styles.gradient}
+      >
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>Ajustes</Text>
+                <Text style={styles.subtitle}>Configura tu experiencia en RIMAC Salud AI</Text>
+              </View>
+              <View style={styles.headerIcon}>
+                <Settings size={28} color={RIMAC_COLORS.primary} strokeWidth={1.5} />
+              </View>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.section}>
-          <TouchableOpacity 
-            style={styles.logoutButtonWrapper}
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <BlurView intensity={80} tint="light" style={styles.glassCard}>
-              <LinearGradient
-                colors={['rgba(255, 68, 68, 0.3)', 'rgba(255, 68, 68, 0.1)']}
-                style={styles.glassGradient}
-              >
-                <LogOut size={24} color="#ff4444" />
-                <Text style={styles.logoutText}>Cerrar Sesión</Text>
-              </LinearGradient>
-            </BlurView>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </LinearGradient>
+          {/* Settings Options */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Preferencias</Text>
+            </View>
+            <View style={styles.optionsContainer}>
+              {settingsOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.optionCard,
+                    index === settingsOptions.length - 1 && styles.lastCard,
+                  ]}
+                  onPress={() => handleOptionPress(option.route)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.optionContent}>
+                    <View style={styles.optionLeft}>
+                      <View
+                        style={[
+                          styles.iconContainer,
+                          { backgroundColor: RIMAC_COLORS.primary + '15' },
+                        ]}
+                      >
+                        <option.icon
+                          size={22}
+                          color={RIMAC_COLORS.primary}
+                          strokeWidth={1.5}
+                        />
+                      </View>
+                      <View style={styles.optionTextContainer}>
+                        <Text style={styles.optionLabel}>{option.label}</Text>
+                        <Text style={styles.optionDescription}>
+                          {option.description}
+                        </Text>
+                      </View>
+                    </View>
+                    <ChevronRight
+                      size={22}
+                      color={RIMAC_COLORS.gray[400]}
+                      strokeWidth={1.5}
+                    />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Account Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Cuenta</Text>
+            </View>
+
+            {/* Logout Button */}
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              activeOpacity={0.7}
+            >
+              <View style={styles.logoutContent}>
+                <View
+                  style={[
+                    styles.logoutIconContainer,
+                    { backgroundColor: '#EF4444' + '15' },
+                  ]}
+                >
+                  <LogOut size={22} color="#EF4444" strokeWidth={1.5} />
+                </View>
+                <View style={styles.logoutTextContainer}>
+                  <Text style={styles.logoutLabel}>Cerrar Sesión</Text>
+                  <Text style={styles.logoutDescription}>
+                    Sal de tu cuenta de forma segura
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight
+                size={22}
+                color={RIMAC_COLORS.gray[400]}
+                strokeWidth={1.5}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Footer Info */}
+          <View style={styles.footerContainer}>
+            <View style={styles.versionBadge}>
+              <Text style={styles.versionText}>RIMAC Salud AI v1.0.0</Text>
+            </View>
+            <Text style={styles.footerText}>
+              Plataforma de salud inteligente {'\n'}
+              Con orientación médica por IA
+            </Text>
+            <View style={styles.footerLinks}>
+              <TouchableOpacity>
+                <Text style={styles.footerLink}>Términos y Condiciones</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerDot}>•</Text>
+              <TouchableOpacity>
+                <Text style={styles.footerLink}>Privacidad</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: RIMAC_COLORS.white,
+  },
   gradient: {
     flex: 1,
   },
   container: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+
+  /* Header */
   header: {
-    padding: 30,
-    paddingTop: 70,
-    position: 'relative',
-    overflow: 'hidden',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    backgroundColor: RIMAC_COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: RIMAC_COLORS.gray[100],
   },
-  title: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-  },
-  decorativeCircle1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    top: -50,
-    right: -50,
-  },
-  decorativeCircle2: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    top: 100,
-    right: 50,
-  },
-  section: {
-    padding: 20,
-  },
-  optionsContainer: {
-    gap: 12,
-  },
-  optionWrapper: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  glassCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  glassGradient: {
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: RIMAC_COLORS.primary,
+    marginBottom: 6,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  headerIcon: {
+    marginLeft: 16,
+    padding: 12,
+    backgroundColor: RIMAC_COLORS.primary + '08',
+    borderRadius: 12,
+  },
+
+  /* Sections */
+  section: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  sectionHeader: {
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[700],
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  /* Options Container */
+  optionsContainer: {
+    gap: 10,
+  },
+  optionCard: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: RIMAC_COLORS.gray[200],
+    overflow: 'hidden',
+  },
+  lastCard: {
+    marginBottom: 0,
+  },
+  optionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   optionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
     flex: 1,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  optionTextContainer: {
+    flex: 1,
+  },
   optionLabel: {
-    fontSize: 18,
-    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: 2,
   },
-  arrow: {
-    fontSize: 28,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '300',
+  optionDescription: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[500],
+    fontWeight: '400',
+    lineHeight: 16,
   },
-  logoutButtonWrapper: {
-    borderRadius: 20,
-    overflow: 'hidden',
+
+  /* Divider */
+  divider: {
+    height: 1,
+    backgroundColor: RIMAC_COLORS.gray[100],
+    marginHorizontal: 20,
+    marginVertical: 8,
+  },
+
+  /* Logout Section */
+  logoutButton: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 68, 68, 0.4)',
+    borderColor: '#EF4444' + '20',
+    overflow: 'hidden',
   },
-  logoutText: {
-    fontSize: 18,
-    color: '#fff',
-    fontWeight: '700',
-    marginLeft: 12,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  logoutContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  logoutIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  logoutTextContainer: {
+    flex: 1,
+  },
+  logoutLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#EF4444',
+    marginBottom: 2,
+  },
+  logoutDescription: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[500],
+    fontWeight: '400',
+    lineHeight: 16,
+  },
+
+  /* Footer */
+  footerContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    marginTop: 16,
+  },
+  versionBadge: {
+    backgroundColor: RIMAC_COLORS.primary + '10',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
+  versionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: RIMAC_COLORS.primary,
+    letterSpacing: 0.3,
+  },
+  footerText: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '400',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  footerLink: {
+    fontSize: 12,
+    color: RIMAC_COLORS.primary,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  footerDot: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[400],
+    fontWeight: '300',
   },
 });

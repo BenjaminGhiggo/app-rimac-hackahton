@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Dna } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../../theme';
 import { EmergencyModal } from '../../components/EmergencyModal';
 
@@ -82,6 +83,7 @@ const PROFILE_DATA = {
 };
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
 
@@ -339,6 +341,32 @@ export default function ProfileScreen() {
               </View>
             </View>
           ))}
+        </View>
+
+        {/* ANTECEDENTES HEREDITARIOS */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.hereditaryButton}
+            activeOpacity={0.75}
+            onPress={() => router.push('/hereditary-health')}
+          >
+            <View style={styles.hereditaryContent}>
+              <View style={styles.hereditaryIcon}>
+                <Dna size={24} color={RIMAC_COLORS.primary} strokeWidth={1.5} />
+              </View>
+              <View style={styles.hereditaryText}>
+                <Text style={styles.hereditaryTitle}>Antecedentes Hereditarios</Text>
+                <Text style={styles.hereditarySubtitle}>
+                  Detecta enfermedades heredadas en tu familia
+                </Text>
+              </View>
+              <ChevronRight 
+                size={22} 
+                color={RIMAC_COLORS.primary} 
+                strokeWidth={1.5}
+              />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* BOTÓN EMERGENCIA - ROJO LLAMATIVO */}
@@ -831,5 +859,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.95)',
     fontWeight: '500',
+  },
+
+  /* HEREDITARY HEALTH BUTTON */
+  hereditaryButton: {
+    backgroundColor: RIMAC_COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: RIMAC_COLORS.primary + '30',
+    overflow: 'hidden',
+    shadowColor: RIMAC_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  hereditaryContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+  },
+  hereditaryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: RIMAC_COLORS.primary + '10',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hereditaryText: {
+    flex: 1,
+  },
+  hereditaryTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: SPACING.xs,
+  },
+  hereditarySubtitle: {
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '400',
+    lineHeight: 16,
   },
 });

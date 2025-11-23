@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { HelpCircle, ChevronDown, ChevronUp, Phone, Mail, MessageCircle } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { RIMAC_COLORS } from '../../theme/colors';
 
 export default function AyudaScreen() {
   const [faqAbierto, setFaqAbierto] = useState<number | null>(null);
@@ -33,160 +35,266 @@ export default function AyudaScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <HelpCircle size={32} color="#0066cc" />
-        <Text style={styles.title}>Ayuda</Text>
-        <Text style={styles.subtitle}>Preguntas frecuentes y soporte</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={[RIMAC_COLORS.white, '#F9FAFB']}
+        style={styles.gradient}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.backButton} />
+            <Text style={styles.headerTitle}>Ayuda</Text>
+            <View style={styles.headerIcon}>
+              <HelpCircle size={24} color={RIMAC_COLORS.primary} strokeWidth={1.5} />
+            </View>
+          </View>
+          <Text style={styles.headerSubtitle}>
+            Preguntas frecuentes y soporte
+          </Text>
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preguntas Frecuentes</Text>
-        {faqs.map((faq, index) => (
-          <View key={index} style={styles.faqCard}>
-            <TouchableOpacity
-              style={styles.faqHeader}
-              onPress={() => toggleFaq(index)}
-            >
-              <Text style={styles.faqPregunta}>{faq.pregunta}</Text>
-              {faqAbierto === index ? (
-                <ChevronUp size={24} color="#0066cc" />
-              ) : (
-                <ChevronDown size={24} color="#666" />
-              )}
-            </TouchableOpacity>
-            {faqAbierto === index && (
-              <View style={styles.faqRespuesta}>
-                <Text style={styles.faqRespuestaText}>{faq.respuesta}</Text>
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* FAQs */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Preguntas Frecuentes</Text>
+            </View>
+            {faqs.map((faq, index) => (
+              <View key={index} style={styles.faqCard}>
+                <TouchableOpacity
+                  style={styles.faqHeader}
+                  onPress={() => toggleFaq(index)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.faqPregunta}>{faq.pregunta}</Text>
+                  <View style={styles.chevronContainer}>
+                    {faqAbierto === index ? (
+                      <ChevronUp
+                        size={20}
+                        color={RIMAC_COLORS.primary}
+                        strokeWidth={2}
+                      />
+                    ) : (
+                      <ChevronDown
+                        size={20}
+                        color={RIMAC_COLORS.gray[400]}
+                        strokeWidth={1.5}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+                {faqAbierto === index && (
+                  <View style={styles.faqRespuesta}>
+                    <Text style={styles.faqRespuestaText}>
+                      {faq.respuesta}
+                    </Text>
+                  </View>
+                )}
               </View>
-            )}
+            ))}
           </View>
-        ))}
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Contacto</Text>
-        
-        <TouchableOpacity style={styles.contactCard}>
-          <Phone size={24} color="#0066cc" />
-          <View style={styles.contactContent}>
-            <Text style={styles.contactTitle}>Llamar a RIMAC</Text>
-            <Text style={styles.contactSubtitle}>106 - Línea de emergencias</Text>
-          </View>
-        </TouchableOpacity>
+          {/* Contact Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Contacto</Text>
+            </View>
 
-        <TouchableOpacity style={styles.contactCard}>
-          <Mail size={24} color="#0066cc" />
-          <View style={styles.contactContent}>
-            <Text style={styles.contactTitle}>Email de soporte</Text>
-            <Text style={styles.contactSubtitle}>soporte@rimac.com</Text>
-          </View>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.contactCard} activeOpacity={0.7}>
+              <View style={styles.contactIcon}>
+                <Phone size={22} color={RIMAC_COLORS.primary} strokeWidth={1.5} />
+              </View>
+              <View style={styles.contactContent}>
+                <Text style={styles.contactTitle}>Llamar a RIMAC</Text>
+                <Text style={styles.contactSubtitle}>106 - Línea de emergencias</Text>
+              </View>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.contactCard}>
-          <MessageCircle size={24} color="#0066cc" />
-          <View style={styles.contactContent}>
-            <Text style={styles.contactTitle}>Chat en vivo</Text>
-            <Text style={styles.contactSubtitle}>Disponible 24/7</Text>
+            <TouchableOpacity style={styles.contactCard} activeOpacity={0.7}>
+              <View style={styles.contactIcon}>
+                <Mail size={22} color={RIMAC_COLORS.primary} strokeWidth={1.5} />
+              </View>
+              <View style={styles.contactContent}>
+                <Text style={styles.contactTitle}>Email de soporte</Text>
+                <Text style={styles.contactSubtitle}>soporte@rimac.com</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.contactCard} activeOpacity={0.7}>
+              <View style={styles.contactIcon}>
+                <MessageCircle
+                  size={22}
+                  color={RIMAC_COLORS.primary}
+                  strokeWidth={1.5}
+                />
+              </View>
+              <View style={styles.contactContent}>
+                <Text style={styles.contactTitle}>Chat en vivo</Text>
+                <Text style={styles.contactSubtitle}>Disponible 24/7</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: RIMAC_COLORS.white,
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+
+  /* Header */
   header: {
-    backgroundColor: '#0066cc',
-    padding: 30,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: RIMAC_COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: RIMAC_COLORS.gray[100],
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: RIMAC_COLORS.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: RIMAC_COLORS.primary + '08',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fff',
-    marginTop: 16,
-    marginBottom: 8,
+  headerSubtitle: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[600],
+    fontWeight: '400',
+    lineHeight: 18,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#e0e0e0',
-  },
+
+  /* Sections */
   section: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  sectionHeader: {
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 14,
+    fontWeight: '700',
+    color: RIMAC_COLORS.gray[900],
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
+  /* FAQ Cards */
   faqCard: {
-    backgroundColor: '#fff',
+    backgroundColor: RIMAC_COLORS.white,
     borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: RIMAC_COLORS.gray[200],
+    marginBottom: 10,
     overflow: 'hidden',
   },
   faqHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   faqPregunta: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-    marginRight: 12,
-  },
-  faqRespuesta: {
-    padding: 20,
-    paddingTop: 0,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  faqRespuestaText: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
+    color: RIMAC_COLORS.gray[900],
+    flex: 1,
+    marginRight: 10,
     lineHeight: 20,
   },
+  chevronContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: RIMAC_COLORS.gray[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  faqRespuesta: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: RIMAC_COLORS.gray[100],
+    backgroundColor: RIMAC_COLORS.primary + '03',
+  },
+  faqRespuestaText: {
+    fontSize: 13,
+    color: RIMAC_COLORS.gray[700],
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+
+  /* Contact Cards */
   contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    backgroundColor: RIMAC_COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 16,
+    borderWidth: 1,
+    borderColor: RIMAC_COLORS.gray[200],
+    marginBottom: 10,
+    gap: 14,
+  },
+  contactIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: RIMAC_COLORS.primary + '08',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contactContent: {
     flex: 1,
   },
   contactTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: RIMAC_COLORS.gray[900],
+    marginBottom: 2,
   },
   contactSubtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    color: RIMAC_COLORS.gray[500],
+    fontWeight: '400',
   },
 });
 

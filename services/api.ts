@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../utils/getLocalIP';
+import { bedrockDirectService } from './bedrockDirect';
 
 export interface TriajeRequest {
   usuarioId: string;
@@ -277,19 +278,16 @@ class ApiService {
     return this.fetchApi(`/onboarding/${usuarioId}`);
   }
 
-  // IA - Consultas conversacionales
+  // IA - Consultas conversacionales (Bedrock Directo - sin servidor)
   async consultarIA(pregunta: string): Promise<{ respuesta: string; modelo: string; contextoUtilizado: boolean }> {
     try {
-      console.log('🚀 [IA API] Iniciando consulta...');
+      console.log('🚀 [IA - Bedrock Direct] Iniciando consulta...');
       console.log('📝 Pregunta:', pregunta);
-      console.log('🔗 URL:', `${API_BASE_URL}/ia/consultar`);
       
       const startTime = Date.now();
       
-      const response = await this.fetchApi<{ respuesta: string; modelo: string; contextoUtilizado: boolean }>('/ia/consultar', {
-        method: 'POST',
-        body: JSON.stringify({ pregunta }),
-      });
+      // Usar Bedrock Directo (sin necesidad de servidor backend)
+      const response = await bedrockDirectService.consultarIA(pregunta);
       
       const duration = Date.now() - startTime;
       console.log(`✅ Respuesta recibida en ${duration}ms`);
@@ -298,12 +296,12 @@ class ApiService {
       return response;
     } catch (error) {
       console.error('❌ Error al consultar IA:', error);
-      console.warn('⚠️ Usando respuesta mock (backend no disponible)');
+      console.warn('⚠️ Error procesando consulta');
       
-      // Respuesta mock si el backend no está disponible
+      // Respuesta genérica en caso de error
       return {
-        respuesta: 'He registrado tu síntoma. Te recomendaría consultar con un especialista. ¿Tienes otros síntomas?',
-        modelo: 'mock',
+        respuesta: 'Disculpa, hubo un error procesando tu pregunta. Intenta de nuevo.',
+        modelo: 'error',
         contextoUtilizado: false,
       };
     }
