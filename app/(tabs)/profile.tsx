@@ -63,7 +63,7 @@ export default function ProfileScreen() {
     <LinearGradient colors={['#667eea', '#764ba2', '#f093fb']} style={styles.gradient}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
+      <View style={styles.iconContainer}>
             <BlurView intensity={80} tint="light" style={styles.iconBlur}>
               <LinearGradient
                 colors={['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.1)']}
@@ -215,8 +215,8 @@ export default function ProfileScreen() {
                 )}
               </LinearGradient>
             </BlurView>
-          </View>
-        </View>
+      </View>
+    </View>
       </ScrollView>
     </LinearGradient>
   );
