@@ -292,23 +292,46 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⚡ Acceso Rápido</Text>
           
-          <View style={styles.modulesGrid}>
-            {[
-              { icon: '📅', title: 'Agendar Cita', route: '/citas' },
-              { icon: '🎁', title: 'Beneficios', route: '/beneficios' },
-              { icon: '🏆', title: 'Logros', route: '/gamificacion' },
-              { icon: '⚙️', title: 'Configuración', route: '/settings' },
-            ].map((module, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.moduleCard}
-                onPress={() => router.push(module.route as any)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.moduleIcon}>{module.icon}</Text>
-                <Text style={styles.moduleTitle}>{module.title}</Text>
-              </TouchableOpacity>
-            ))}
+          {/* Primera fila */}
+          <View style={styles.modulesRow}>
+            <TouchableOpacity
+              style={styles.moduleCard}
+              onPress={() => router.push('/citas' as any)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.moduleIcon}>📅</Text>
+              <Text style={styles.moduleTitle}>Agendar Cita</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.moduleCard}
+              onPress={() => router.push('/beneficios' as any)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.moduleIcon}>🎁</Text>
+              <Text style={styles.moduleTitle}>Beneficios</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Segunda fila */}
+          <View style={styles.modulesRow}>
+            <TouchableOpacity
+              style={styles.moduleCard}
+              onPress={() => router.push('/gamificacion' as any)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.moduleIcon}>🏆</Text>
+              <Text style={styles.moduleTitle}>Logros</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.moduleCard}
+              onPress={() => router.push('/(tabs)/settings' as any)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.moduleIcon}>⚙️</Text>
+              <Text style={styles.moduleTitle}>Configuración</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -698,29 +721,36 @@ const styles = StyleSheet.create({
   },
 
   /* MODULES GRID */
-  modulesGrid: {
+  modulesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: SPACING.lg,
-    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
   },
   moduleCard: {
-    width: '48%',
+    flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    minHeight: 140,
+    shadowColor: RIMAC_COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   moduleIcon: {
-    fontSize: 32,
-    marginBottom: SPACING.md,
+    fontSize: 40,
+    marginBottom: SPACING.lg,
   },
   moduleTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: RIMAC_COLORS.white,
     textAlign: 'center',
+    lineHeight: 18,
   },
 });
