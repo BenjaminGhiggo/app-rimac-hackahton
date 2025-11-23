@@ -280,12 +280,26 @@ class ApiService {
   // IA - Consultas conversacionales
   async consultarIA(pregunta: string): Promise<{ respuesta: string; modelo: string; contextoUtilizado: boolean }> {
     try {
-      return await this.fetchApi('/ia/consultar', {
+      console.log('🚀 [IA API] Iniciando consulta...');
+      console.log('📝 Pregunta:', pregunta);
+      console.log('🔗 URL:', `${API_BASE_URL}/ia/consultar`);
+      
+      const startTime = Date.now();
+      
+      const response = await this.fetchApi<{ respuesta: string; modelo: string; contextoUtilizado: boolean }>('/ia/consultar', {
         method: 'POST',
         body: JSON.stringify({ pregunta }),
       });
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ Respuesta recibida en ${duration}ms`);
+      console.log('📊 Respuesta:', response);
+      
+      return response;
     } catch (error) {
-      console.error('Error al consultar IA:', error);
+      console.error('❌ Error al consultar IA:', error);
+      console.warn('⚠️ Usando respuesta mock (backend no disponible)');
+      
       // Respuesta mock si el backend no está disponible
       return {
         respuesta: 'He registrado tu síntoma. Te recomendaría consultar con un especialista. ¿Tienes otros síntomas?',
