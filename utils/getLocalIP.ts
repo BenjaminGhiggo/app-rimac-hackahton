@@ -29,6 +29,6 @@ export function getLocalIP(): string {
 }
 
 export const API_BASE_URL = __DEV__
-  ? `http://${getLocalIP()}:3000/api`
-  : 'https://api.rimqhali.ai/api';
+  ? `http://${getLocalIP()}:3000`
+  : 'https://api.rimqhali.ai';
 
