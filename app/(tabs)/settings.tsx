@@ -215,7 +215,8 @@ const styles = StyleSheet.create({
   /* Header */
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingTop: 40,
+    paddingBottom: 32,
     backgroundColor: RIMAC_COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: RIMAC_COLORS.gray[100],
@@ -229,10 +230,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '800',
     color: RIMAC_COLORS.primary,
-    marginBottom: 6,
+    marginBottom: 8,
     letterSpacing: -0.5,
   },
   subtitle: {
