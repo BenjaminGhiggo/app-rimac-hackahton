@@ -276,6 +276,24 @@ class ApiService {
   async obtenerOnboarding(usuarioId: string) {
     return this.fetchApi(`/onboarding/${usuarioId}`);
   }
+
+  // IA - Consultas conversacionales
+  async consultarIA(pregunta: string): Promise<{ respuesta: string; modelo: string; contextoUtilizado: boolean }> {
+    try {
+      return await this.fetchApi('/ia/consultar', {
+        method: 'POST',
+        body: JSON.stringify({ pregunta }),
+      });
+    } catch (error) {
+      console.error('Error al consultar IA:', error);
+      // Respuesta mock si el backend no está disponible
+      return {
+        respuesta: 'He registrado tu síntoma. Te recomendaría consultar con un especialista. ¿Tienes otros síntomas?',
+        modelo: 'mock',
+        contextoUtilizado: false,
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();

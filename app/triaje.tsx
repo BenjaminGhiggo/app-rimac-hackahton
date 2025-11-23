@@ -9,11 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   FlatList,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Send, ArrowLeft } from 'lucide-react-native';
 import { RIMAC_COLORS, SPACING, BORDER_RADIUS } from '../theme';
+import { apiService } from '../services/api';
 
 interface Message {
   id: string;
@@ -68,17 +70,32 @@ export default function TriajeScreen() {
     setInput('');
     setLoading(true);
 
-    // Simular respuesta de IA (tu colega agregará la API aquí)
-    setTimeout(() => {
+    try {
+      // Llamar a la IA real
+      const respuesta = await apiService.consultarIA(input.trim());
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        text: 'He registrado tu síntoma. Basándome en lo que me cuentas, te recomendaría consultar con un especialista en el área. ¿Tienes otros síntomas además de este?',
+        text: respuesta.respuesta,
         timestamp: new Date(),
       };
+      
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error al obtener respuesta de IA:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        text: 'Disculpa, hubo un error procesando tu pregunta. Por favor, intenta de nuevo.',
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   }, [input]);
 
   const handleQuickOption = useCallback((option: string) => {
